@@ -1,45 +1,74 @@
-import React from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Button } from "react-native";
+import React, { useState } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
+import { Picker } from "@react-native-picker/picker";
 
 export default function RegisterScreen({ navigation }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("participant");
+
+  const handleRegister = () => {
+    // TODO: Implémenter la logique d'inscription
+    console.log({ email, password, role });
+  };
+
   return (
     <View style={styles.container}>
-      {/* Titre du formulaire */}
-      <Text style={styles.title}>Forms</Text>
+      <Text style={styles.title}>Créer un Compte</Text>
 
-      {/* Conteneur du formulaire */}
       <View style={styles.formContainer}>
-        <Text style={styles.formTitle}>Form title</Text>
-        <Text style={styles.formDescription}>
-          Lorem ipsum dolor sit amet. Qui nobis nostrum ut voluptas incidunt.
-        </Text>
+        {/* Email */}
+        <Text style={styles.label}>Email</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Entrez votre email"
+          placeholderTextColor="#888"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
 
-        {/* Champ 1 */}
-        <Text style={styles.label}>Label</Text>
-        <TextInput style={styles.input} placeholder="Placeholder.." placeholderTextColor="#888" />
-        <Text style={styles.inputTip}>Input tip</Text>
+        {/* Mot de passe */}
+        <Text style={styles.label}>Mot de passe</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Entrez votre mot de passe"
+          placeholderTextColor="#888"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+        />
 
-        {/* Champ 2 */}
-        <Text style={styles.label}>Label</Text>
-        <TextInput style={styles.input} placeholder="Placeholder.." placeholderTextColor="#888" />
-        <Text style={styles.inputTip}>Input tip</Text>
-
-        {/* Champ avec icône */}
-        <Text style={styles.label}>Label</Text>
-        <View style={styles.iconBox}>
-          <FontAwesome5 name="comment-dots" size={32} color="white" />
-          <Text style={styles.iconText}>Talk to us!</Text>
+        {/* Sélecteur de rôle */}
+        <Text style={styles.label}>Rôle</Text>
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={role}
+            onValueChange={(itemValue) => setRole(itemValue)}
+            style={styles.picker}
+            dropdownIconColor="#fff"
+          >
+            <Picker.Item label="Participant" value="participant" />
+            <Picker.Item label="Organisateur" value="organisateur" />
+          </Picker>
         </View>
-        <Text style={styles.inputTip}>Input tip</Text>
 
-        {/* Bouton */}
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Login')} >
-          <Text style={styles.buttonText}>retour</Text>
+        {/* Bouton de validation */}
+        <TouchableOpacity style={styles.button} onPress={handleRegister}>
+          <Text style={styles.buttonText}>Valider</Text>
+        </TouchableOpacity>
+
+        {/* Lien retour */}
+        <TouchableOpacity 
+          style={styles.linkButton} 
+          onPress={() => navigation.navigate('Login')}
+        >
+          <Text style={styles.linkText}>Déjà un compte ? Connectez-vous</Text>
         </TouchableOpacity>
       </View>
     </View>
-  
   );
 }
 
@@ -123,4 +152,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
+  pickerContainer: {
+    backgroundColor: "#222",
+    borderRadius: 8,
+    borderColor: "#333",
+    borderWidth: 1,
+    marginBottom: 16,
+    overflow: 'hidden'
+  },
+  picker: {
+    color: "#fff",
+    height: 50,
+    width: "100%",
+  },
+  linkButton: {
+    marginTop: 16,
+    alignItems: "center",
+  },
+  linkText: {
+    color: "#0f0",
+    fontSize: 14,
+  }
 });
