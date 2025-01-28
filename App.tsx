@@ -1,19 +1,25 @@
+import React, { createContext, useState, useContext } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { useState } from 'react';
 
 // Import des écrans
 import LoginScreen from './screens/auth/LoginScreen';
 import RegisterScreen from './screens/auth/RegisterScreen';
 import HomeScreen from './screens/main/HomeScreen';
 import ProfileScreen from './screens/main/ProfileScreen';
-import React from 'react';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+
+export const AuthContext = createContext({
+  isAuthenticated: false,
+  setIsAuthenticated: (value: boolean) => {},
+});
+
+export const useAuth = () => useContext(AuthContext);
 
 function TabNavigator() {
   return (
@@ -28,24 +34,27 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator>
-        {!isAuthenticated ? (
-          <>
-            <Stack.Screen name="Login">
-              {props => <LoginScreen {...props} setIsAuthenticated={setIsAuthenticated} />}
-            </Stack.Screen>
-            <Stack.Screen name="Register" component={RegisterScreen} />
-          </>
-        ) : (
-          <Stack.Screen 
-            name="MainApp" 
-            component={TabNavigator}
-            options={{ headerShown: false }}
-          />
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+    <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated }}>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          {!isAuthenticated ? (
+            // Stack d'authentification
+            <Stack.Group>
+              <Stack.Screen name="Login">
+                {props => <LoginScreen {...props} setIsAuthenticated={setIsAuthenticated} />}
+              </Stack.Screen>
+              <Stack.Screen name="Register" component={RegisterScreen} />
+            </Stack.Group>
+          ) : (
+            // Stack principal
+            <Stack.Screen 
+              name="MainApp" 
+              component={TabNavigator}
+            />
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+    </AuthContext.Provider>
   );
 }
 
