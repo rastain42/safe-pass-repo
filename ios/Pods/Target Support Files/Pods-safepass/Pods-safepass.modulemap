@@ -1,0 +1,6 @@
+module Pods_safepass {
+  umbrella header "Pods-safepass-umbrella.h"
+
+  export *
+  module * { export * }
+}
