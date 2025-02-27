@@ -3,9 +3,12 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-nativ
 import { Link, useRouter } from 'expo-router';
 import { getAuth, PhoneAuthProvider, signInWithCredential } from 'firebase/auth';
 import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
-import { firebaseConfig } from '../../firebaseConfig';
+import { firebaseConfig } from '@/firebase/config';
 import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Picker } from '@react-native-picker/picker';
+
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import { format } from 'date-fns';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -21,43 +24,57 @@ export default function RegisterScreen() {
 
   const [email, setEmail] = useState('');
   const [passwordHash, setPasswordHash] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+
+
   const [role, setRole] = useState('participant');
   const [verifiedStatus, setVerifiedStatus] = useState('non_verified');
 
   const handleSendVerificationCode = async () => {
     try {
       const auth = getAuth();
-      const formattedPhone = phoneNumber.startsWith('+33')
-        ? phoneNumber
-        : `+33${phoneNumber.replace(/^0/, '')}`;
+
+      let formattedPhone = phoneNumber.trim()
+        .replace(/\s/g, '')
+        .replace(/[()-]/g, '');
+
+      if (!formattedPhone.startsWith('+')) {
+        formattedPhone = formattedPhone.startsWith('0')
+          ? `+33${formattedPhone.slice(1)}`
+          : `+33${formattedPhone}`;
+      }
+
       const provider = new PhoneAuthProvider(auth);
-       // En dev, utilisez ces numéros de test
-    if (__DEV__) {
-      // Ces numéros fonctionnent automatiquement en mode émulation
-      // +1 650-555-1234 -> 123456
-      // +1 650-555-5678 -> 654321
-      setVerificationId('testVerificationId');
-      setIsCodeSent(true);
-      return;
-    }
+
       const vId = await provider.verifyPhoneNumber(
         formattedPhone,
         recaptchaVerifier.current as any
       );
+
       setVerificationId(vId);
       setIsCodeSent(true);
       setError(null);
     } catch (err: any) {
-      setError("Erreur lors de l'envoi du code : " + err.message);
+      console.error('Full error object:', JSON.stringify(err, null, 2));
+      if (err.code === 'auth/invalid-phone-number') {
+        setError('Numéro de téléphone invalide');
+      } else if (err.code === 'auth/network-request-failed') {
+        setError(`Erreur réseau. Détails: ${err.message}`);
+      } else {
+        setError(`Erreur: ${err.code} - ${err.message}`);
+      }
     }
   };
 
   const handleVerifyCode = async () => {
     try {
-      if (__DEV__ && verificationCode === '123456') {
-        router.replace('/(tabs)');
-        return;
-      }
+      // if (__DEV__ && verificationCode === '123456') {
+      //   router.replace('/(tabs)');
+      //   return;
+      // }
       const auth = getAuth();
       const credential = PhoneAuthProvider.credential(verificationId, verificationCode);
       await signInWithCredential(auth, credential);
@@ -82,6 +99,9 @@ export default function RegisterScreen() {
         phone: user.phoneNumber,
         email,
         password_hash: passwordHash,
+        firstName,
+        lastName,
+        birthDate,
         role,
         verified_status: verifiedStatus,
         created_at: serverTimestamp(),
@@ -99,7 +119,9 @@ export default function RegisterScreen() {
       <FirebaseRecaptchaVerifierModal
         ref={recaptchaVerifier}
         firebaseConfig={firebaseConfig}
-        attemptInvisibleVerification
+        attemptInvisibleVerification={false}
+        title='Vérification reCAPTCHA'
+        cancelLabel='Annuler'
       />
 
       {!showRegisterForm ? (
@@ -174,6 +196,43 @@ export default function RegisterScreen() {
             value={passwordHash}
             onChangeText={setPasswordHash}
             secureTextEntry
+          />
+          <Text style={styles.label}>Prénom</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ex: Jean"
+            placeholderTextColor="#888"
+            value={firstName}
+            onChangeText={setFirstName}
+          />
+
+          <Text style={styles.label}>Nom</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ex: Dupont"
+            placeholderTextColor="#888"
+            value={lastName}
+            onChangeText={setLastName}
+          />
+
+          <Text style={styles.label}>Date de naissance</Text>
+          <TouchableOpacity
+            style={styles.input}
+            onPress={() => setDatePickerVisibility(true)}
+          >
+            <Text style={{ color: birthDate ? '#fff' : '#888' }}>
+              {birthDate || 'Sélectionner une date'}
+            </Text>
+          </TouchableOpacity>
+
+          <DateTimePickerModal
+            isVisible={isDatePickerVisible}
+            mode="date"
+            onConfirm={(date) => {
+              setBirthDate(format(date, 'dd/MM/yyyy'));
+              setDatePickerVisibility(false);
+            }}
+            onCancel={() => setDatePickerVisibility(false)}
           />
 
           <Text style={styles.label}>Rôle</Text>

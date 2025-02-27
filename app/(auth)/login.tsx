@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-nativ
 import { Link, useRouter } from 'expo-router';
 import { getAuth, PhoneAuthProvider, signInWithCredential } from 'firebase/auth';
 import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
-import { firebaseConfig } from '../../firebaseConfig';
+import { firebaseConfig } from '@/firebase/config';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -21,15 +21,15 @@ export default function LoginScreen() {
         ? phoneNumber
         : `+33${phoneNumber.replace(/^0/, '')}`;
 
-         // En dev, utilisez ces numéros de test
-    if (__DEV__) {
-      // Ces numéros fonctionnent automatiquement en mode émulation
-      // +1 650-555-1234 -> 123456
-      // +1 650-555-5678 -> 654321
-      setVerificationId('testVerificationId');
-      setIsCodeSent(true);
-      return;
-    }
+      // En dev, utilisez ces numéros de test
+      // if (__DEV__) {
+      //   // Ces numéros fonctionnent automatiquement en mode émulation
+      //   // +1 650-555-1234 -> 123456
+      //   // +1 650-555-5678 -> 654321
+      //   setVerificationId('testVerificationId');
+      //   setIsCodeSent(true);
+      //   return;
+      // }
       const phoneProvider = new PhoneAuthProvider(auth);
       const vId = await phoneProvider.verifyPhoneNumber(
         formattedPhone,
@@ -45,10 +45,10 @@ export default function LoginScreen() {
 
   const handleVerifyCode = async () => {
     try {
-      if (__DEV__ && verificationCode === '123456') {
-        router.replace('/(tabs)');
-        return;
-      }
+      // if (__DEV__ && verificationCode === '123456') {
+      //   router.replace('/(tabs)');
+      //   return;
+      // }
       const auth = getAuth();
       const credential = PhoneAuthProvider.credential(verificationId, verificationCode);
       await signInWithCredential(auth, credential);

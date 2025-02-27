@@ -5,13 +5,12 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
-
-import React from 'react';
 import { useColorScheme } from './theme';
 import { User } from '@/types/user';
-import { getAuth } from 'firebase/auth'; 
+import { getAuth } from 'firebase/auth';
 import { onAuthStateChanged } from 'firebase/auth';
-import '../firebaseConfig';
+import { StripeProvider } from '@stripe/stripe-react-native';
+
 
 export {
   ErrorBoundary,
@@ -26,14 +25,14 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const { colorScheme } = useColorScheme();
   const [user, setUser] = useState<User | null>(null);
-  
+
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
     ...FontAwesome.font,
   });
 
   useEffect(() => {
-    
+
     if (error) throw error;
   }, [error]);
 
@@ -54,22 +53,28 @@ export default function RootLayout() {
           createdAt: firebaseUser.metadata.creationTime || '',
           updatedAt: firebaseUser.metadata.lastSignInTime || '',
           email: firebaseUser.email || '',
-          phone: firebaseUser.phoneNumber || ''
+          phone: firebaseUser.phoneNumber || '',
+          firstName: '',
+          lastName: '',
+          birthDate: ''
         };
         setUser(mappedUser);
       } else {
         setUser(null);
       }
     });
-  
+
     return () => unsubscribe();
   }, []);
 
   if (!loaded) {
     return null;
   }
+  let pk: string = process.env.STRIPE_SECRET_KEY!
+  return <StripeProvider publishableKey="$pk">
+    <RootLayoutNav user={user} />
 
-  return <RootLayoutNav user={user} />;
+  </StripeProvider>
 }
 
 
@@ -77,7 +82,7 @@ interface RootLayoutNavProps {
   user: User | null;
 }
 
-function RootLayoutNav({ user }: RootLayoutNavProps) {  
+function RootLayoutNav({ user }: RootLayoutNavProps) {
   const { colorScheme } = useColorScheme();
 
 
@@ -96,13 +101,13 @@ function RootLayoutNav({ user }: RootLayoutNavProps) {
             }
           }}
         >
-        <Stack.Screen 
+          <Stack.Screen
             name="(auth)"
-            options={{ headerShown: false }} 
+            options={{ headerShown: false }}
           />
-        <Stack.Screen 
+          <Stack.Screen
             name="(tabs)"
-            options={{ headerShown: false }} 
+            options={{ headerShown: false }}
           />
         </Stack>
       </ThemeProvider>

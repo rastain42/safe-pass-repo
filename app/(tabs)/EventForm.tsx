@@ -6,29 +6,79 @@ import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format } from 'date-fns';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
+import { doc, setDoc, collection } from 'firebase/firestore';
+import { db } from '@/firebase/config';
+import { getAuth } from 'firebase/auth';
+import { Picker } from '@react-native-picker/picker';
+import { AgeRestriction } from '@/types/enum';
+import { EventTicket } from '@/types/tickets';
 
 interface EventForm {
-  title: string;
+  name: string;
   description: string;
-  startDate: Date;
-  endDate: Date;
+  location: string;
+  start_date: Date;
+  end_date: Date;
+  capacity: number;
+  age_restriction: AgeRestriction;
+  image?: string;
+  tickets: EventTicket[];
 }
 
 export default function EventFormScreen() {
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [tickets, setTickets] = useState<EventTicket[]>([]);
+  const [showTicketForm, setShowTicketForm] = useState(false);
+  const [currentTicket, setCurrentTicket] = useState<EventTicket>({
+    id: '',
+    name: '',
+    price: null as unknown as number,
+    quantity: null as unknown as number,
+    description: '',
+  });
+
+  const handleAddTicket = () => {
+    if (!currentTicket.price || !currentTicket.quantity) {
+      return; // Ou afficher une erreur
+    }
+
+    setTickets([...tickets, {
+      ...currentTicket,
+      id: Date.now().toString(),
+      price: currentTicket.price || 0,
+      quantity: currentTicket.quantity || 0,
+    }]);
+
+    setCurrentTicket({
+      id: '',
+      name: '',
+      price: null as unknown as number,
+      quantity: null as unknown as number,
+      description: '',
+    });
+    setShowTicketForm(false);
+  };
+
+  const handleRemoveTicket = (ticketId: string) => {
+    setTickets(tickets.filter(t => t.id !== ticketId));
+  };
+
 
   const { control, handleSubmit, formState: { errors }, watch } = useForm<EventForm>({
     defaultValues: {
-      title: '',
+      name: '',
       description: '',
-      startDate: new Date(),
-      endDate: new Date(),
+      location: '',
+      start_date: new Date(),
+      end_date: new Date(),
+      capacity: 0,
+      age_restriction: AgeRestriction.None,
     },
   });
 
-  const startDate = watch('startDate');
+  const start_date = watch('start_date');
 
   const openImagePicker = async () => {
     try {
@@ -51,27 +101,52 @@ export default function EventFormScreen() {
         setImageUri(cropped.uri);
       }
     } catch (error) {
-      console.log('Image picking error:', error);
     }
   };
 
-  const onSubmit = (data: EventForm) => {
-    console.log('Form data:', data);
-    console.log('Cropped image:', imageUri);
+  const onSubmit = async (data: EventForm) => {
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+
+      if (!user) {
+        console.error('Utilisateur non connecté');
+        return;
+      }
+
+      const eventsRef = collection(db, 'events');
+      const newEventRef = doc(eventsRef); // Génère un nouvel ID automatiquement
+
+      const formData = {
+        ...data,
+        id: newEventRef.id,
+        creatorId: user.uid,
+        image: imageUri,
+        tickets: tickets,
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
+
+      await setDoc(newEventRef, formData);
+      // Optionnel: navigation.goBack() ou reset du formulaire
+
+    } catch (error) {
+      console.error('Erreur lors de la création de l\'événement:', error);
+    }
   };
 
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Créer un Événement</Text>
       <View style={styles.formContainer}>
-        <Text style={styles.label}>Titre</Text>
+        <Text style={styles.label}>Nom</Text>
         <Controller
           control={control}
           rules={{
-            required: 'Le titre est requis',
+            required: 'Le nom est requis',
             minLength: {
               value: 3,
-              message: 'Le titre doit contenir au moins 3 caractères'
+              message: 'Le nom doit contenir au moins 3 caractères'
             }
           }}
           render={({ field: { onChange, value } }) => (
@@ -79,13 +154,13 @@ export default function EventFormScreen() {
               style={styles.input}
               onChangeText={onChange}
               value={value}
-              placeholder="Titre de l'événement"
+              placeholder="Nom de l'événement"
               placeholderTextColor="#888"
             />
           )}
-          name="title"
+          name="name"
         />
-        {errors.title && <Text style={styles.errorText}>{errors.title.message}</Text>}
+        {errors.name && <Text style={styles.errorText}>{errors.name.message}</Text>}
 
         <Text style={styles.label}>Description</Text>
         <Controller
@@ -112,6 +187,80 @@ export default function EventFormScreen() {
         />
         {errors.description && <Text style={styles.errorText}>{errors.description.message}</Text>}
 
+        <Text style={styles.label}>Lieu</Text>
+        <Controller
+          control={control}
+          rules={{
+            required: 'Le lieu est requis',
+          }}
+          render={({ field: { onChange, value } }) => (
+            <TextInput
+              style={styles.input}
+              onChangeText={onChange}
+              value={value}
+              placeholder="Lieu de l'événement"
+              placeholderTextColor="#888"
+            />
+          )}
+          name="location"
+        />
+        {errors.location && <Text style={styles.errorText}>{errors.location.message}</Text>}
+
+        <Text style={styles.label}>Capacité</Text>
+        <Controller
+          control={control}
+          rules={{
+            required: 'La capacité est requise',
+            min: {
+              value: 1,
+              message: 'La capacité doit être supérieure à 0'
+            }
+          }}
+          render={({ field: { onChange, value } }) => (
+            <TextInput
+              style={styles.input}
+              onChangeText={(text) => onChange(parseInt(text) || 0)}
+              value={value.toString()}
+              placeholder="Nombre de places"
+              placeholderTextColor="#888"
+              keyboardType="numeric"
+            />
+          )}
+          name="capacity"
+        />
+        {errors.capacity && <Text style={styles.errorText}>{errors.capacity.message}</Text>}
+
+
+        <Text style={styles.label}>Restriction d'âge</Text>
+        <Controller
+          control={control}
+          rules={{
+            required: "La restriction d'âge est requise",
+          }}
+          render={({ field: { onChange, value } }) => (
+            <View style={styles.pickerContainer}>
+              <Picker
+                style={styles.picker}
+                selectedValue={value}
+                onValueChange={onChange}
+                dropdownIconColor="#000"
+                mode="dropdown"
+              >
+                {Object.values(AgeRestriction).map((restriction) => (
+                  <Picker.Item
+                    key={restriction}
+                    label={restriction}
+                    value={restriction}
+                    color="#fff"
+                  />
+                ))}
+              </Picker>
+            </View>
+          )}
+          name="age_restriction"
+        />
+        {errors.age_restriction && <Text style={styles.errorText}>{errors.age_restriction.message}</Text>}
+
         <Text style={styles.label}>Date et heure de début</Text>
         <Controller
           control={control}
@@ -133,7 +282,7 @@ export default function EventFormScreen() {
               />
             </>
           )}
-          name="startDate"
+          name="start_date"
         />
 
         <Text style={styles.label}>Date et heure de fin</Text>
@@ -142,7 +291,7 @@ export default function EventFormScreen() {
           rules={{
             required: 'La date de fin est requise',
             validate: (value) =>
-              value > startDate || 'La date de fin doit être après la date de début'
+              value > start_date || 'La date de fin doit être après la date de début'
           }}
           render={({ field: { onChange, value } }) => (
             <>
@@ -152,7 +301,7 @@ export default function EventFormScreen() {
               <DateTimePickerModal
                 isVisible={showEndPicker}
                 mode="datetime"
-                minimumDate={startDate}
+                minimumDate={start_date}
                 onConfirm={(date: Date) => {
                   setShowEndPicker(false);
                   onChange(date);
@@ -162,9 +311,9 @@ export default function EventFormScreen() {
               />
             </>
           )}
-          name="endDate"
+          name="end_date"
         />
-        {errors.endDate && <Text style={styles.errorText}>{errors.endDate.message}</Text>}
+        {errors.end_date && <Text style={styles.errorText}>{errors.end_date.message}</Text>}
 
         <TouchableOpacity onPress={openImagePicker} style={[styles.button, { marginBottom: 12 }]}>
           <Text style={styles.buttonText}>Choisir une image</Text>
@@ -173,27 +322,176 @@ export default function EventFormScreen() {
         {imageUri && (
           <Image
             source={{ uri: imageUri }}
-            style={{ width: '100%', height: 200, marginBottom: 16 }}
-            resizeMode="cover"
+            style={{ width: '100%', height: 400, marginBottom: 16 }}
+            resizeMode='contain'
           />
         )}
 
+        <View style={styles.ticketsSection}>
+          <Text style={styles.sectionTitle}>Tickets</Text>
+
+          {tickets.map((ticket) => (
+            <View key={ticket.id} style={styles.ticketCard}>
+              <View style={styles.ticketInfo}>
+                <Text style={styles.ticketName}>{ticket.name}</Text>
+                <Text style={styles.ticketDetails}>
+                  Prix: {ticket.price}€ - Quantité: {ticket.quantity}
+                </Text>
+                {ticket.description && (
+                  <Text style={styles.ticketDescription}>{ticket.description}</Text>
+                )}
+              </View>
+              <TouchableOpacity
+                onPress={() => handleRemoveTicket(ticket.id)}
+                style={styles.removeButton}
+              >
+                <Text style={styles.removeButtonText}>×</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+
+          {showTicketForm ? (
+            <View style={styles.ticketForm}>
+              <TextInput
+                style={styles.input}
+                placeholder="Nom du ticket"
+                placeholderTextColor="#888"
+                value={currentTicket.name}
+                onChangeText={(text) => setCurrentTicket({ ...currentTicket, name: text })}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Prix"
+                placeholderTextColor="#888"
+                keyboardType="numeric"
+                value={currentTicket.price ? currentTicket.price.toString() : ''}
+                onChangeText={(text) => setCurrentTicket({
+                  ...currentTicket,
+                  price: text ? parseFloat(text) : null as unknown as number
+                })}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Quantité disponible"
+                placeholderTextColor="#888"
+                keyboardType="numeric"
+                value={currentTicket.quantity ? currentTicket.quantity.toString() : ''}
+                onChangeText={(text) => setCurrentTicket({
+                  ...currentTicket,
+                  quantity: text ? parseInt(text) : null as unknown as number
+                })}
+              />
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Description (optionnel)"
+                placeholderTextColor="#888"
+                multiline
+                value={currentTicket.description}
+                onChangeText={(text) => setCurrentTicket({ ...currentTicket, description: text })}
+              />
+              <View style={styles.ticketFormButtons}>
+                <TouchableOpacity
+                  style={[styles.button, { flex: 1, backgroundColor: '#666' }]}
+                  onPress={() => setShowTicketForm(false)}
+                >
+                  <Text style={styles.buttonText}>Annuler</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.button, { flex: 1 }]}
+                  onPress={handleAddTicket}
+                >
+                  <Text style={styles.buttonText}>Ajouter</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={[styles.button, { marginVertical: 12 }]}
+              onPress={() => setShowTicketForm(true)}
+            >
+              <Text style={styles.buttonText}>Ajouter un ticket</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
         <TouchableOpacity
-          style={[
-            styles.button,
-            errors.title || errors.description ? styles.buttonDisabled : null
-          ]}
+          style={[styles.button, Object.keys(errors).length > 0 ? styles.buttonDisabled : null]}
           onPress={handleSubmit(onSubmit)}
-          disabled={!!errors.title || !!errors.description}
+          disabled={Object.keys(errors).length > 0}
         >
           <Text style={styles.buttonText}>Créer l'événement</Text>
         </TouchableOpacity>
       </View>
+
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  ticketsSection: {
+    backgroundColor: 'transparent',
+    marginTop: 24,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 16,
+  },
+  ticketCard: {
+    backgroundColor: '#222',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  ticketInfo: {
+    flex: 1,
+  },
+  ticketName: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  ticketDetails: {
+    color: '#0f0',
+    fontSize: 14,
+    marginTop: 4,
+  },
+  ticketDescription: {
+    color: '#888',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  removeButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#ff4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  removeButtonText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  ticketForm: {
+    backgroundColor: '#222',
+    padding: 16,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  ticketFormButtons: {
+    backgroundColor: 'transparent',
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+  },
   container: {
     flex: 1,
     padding: 16,
@@ -251,5 +549,16 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#ff4444',
     marginBottom: 16,
+  },
+  pickerContainer: {
+    backgroundColor: '#222',
+    borderRadius: 8,
+    marginBottom: 16,
+    overflow: 'hidden',
+  },
+  picker: {
+    color: '#fff',
+    backgroundColor: '#222',
+    height: 50,
   },
 });

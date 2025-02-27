@@ -1,0 +1,11 @@
+todo :
+
+- faire en sorte de pas pouvoir s'inscrire avec le meme Numéro
+- sur la creation d'évenement faire un selector pour la limite d'age
+- creer une popup de confirmation / annonce
+- qr code 
+- scan de QR code
+- afficher la création d'évènements que pour les orga
+
+- documentation
+- tests unitaires ??

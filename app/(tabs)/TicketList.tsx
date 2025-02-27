@@ -1,41 +1,83 @@
+import { useState, useEffect } from 'react';
+import { View, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 import TicketCard from '@/components/Design/TicketCard';
-import { View, FlatList, StyleSheet } from 'react-native';
-
-interface Ticket {
-  id: number;
-  event_name: string;
-  purchase_date: string;
-  price: number;
-  status: string;
-  qr_code: string;
-}
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '@/firebase/config';
+import { getAuth } from 'firebase/auth';
+import { UserTicket } from '@/types/tickets';
+import { Text } from '@/components/Themed';
 
 export default function TicketsListScreen() {
-  // Exemple de données (à remplacer par vos données réelles)
-  const tickets: Ticket[] = [
-    {
-      id: 1,
-      event_name: "Soirée Electro",
-      purchase_date: "24/02/2024",
-      price: 25,
-      status: "Valide",
-      qr_code: "TICKET123"
-    },
-    {
-      id: 2,
-      event_name: "Concert Rock",
-      purchase_date: "23/02/2024",
-      price: 35,
-      status: "Utilisé",
-      qr_code: "TICKET456"
-    }
-  ];
+  const [tickets, setTickets] = useState<UserTicket[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchTickets = async () => {
+      try {
+        const auth = getAuth();
+        const user = auth.currentUser;
+
+        if (!user) {
+          setError("Utilisateur non connecté");
+          return;
+        }
+
+        const ticketsRef = collection(db, 'user_tickets');
+        const q = query(ticketsRef, where('user_id', '==', user.uid));
+        const querySnapshot = await getDocs(q);
+
+        const userTickets: UserTicket[] = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          userTickets.push({
+            ...data,
+            id: doc.id,
+            purchase_date: data.purchase_date?.toDate() || new Date(),
+            created_at: data.created_at?.toDate() || new Date(),
+          } as UserTicket);
+        });
+
+        setTickets(userTickets);
+      } catch (err: any) {
+        setError(`Erreur: ${err.code} - ${err.message}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTickets();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color="#0f0" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    );
+  }
+
+  if (tickets.length === 0) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.emptyText}>Aucun ticket trouvé</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <FlatList
         data={tickets}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <TicketCard ticket={item} />
         )}
@@ -52,5 +94,17 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     padding: 16,
+  },
+  centered: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#ff4444',
+    fontSize: 16,
+  },
+  emptyText: {
+    color: '#fff',
+    fontSize: 16,
   }
 });

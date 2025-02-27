@@ -3,16 +3,17 @@ import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { AgeRestriction } from '@/types/enum';
 
 interface EventCardProps {
-  id: number;
+  id: string;
   name: string;
   description: string;
   location: string;
   start_date: Date;
   end_date: Date;
   capacity: number;
-  age_restriction: string;
+  age_restriction: AgeRestriction;
   image?: string | number;
   onPress?: () => void;
 }
@@ -29,22 +30,22 @@ const EventCard: React.FC<EventCardProps> = ({
   onPress
 }) => {
   return (
-   < TouchableOpacity style={styles.card} onPress={onPress}>
-    <Image
-      source={typeof image === 'string' 
-        ? { uri: image } 
-        : image || require('../../assets/images/safepasslogoV1.png')}
-      style={styles.image}
-    />
-      
+    < TouchableOpacity style={styles.card} onPress={onPress}>
+      <Image
+        source={typeof image === 'string'
+          ? { uri: image }
+          : image || require('../../assets/images/safepasslogoV1.png')}
+        style={styles.image}
+      />
+
       <View style={styles.content}>
         <Text style={styles.title} numberOfLines={1}>{name}</Text>
-        
+
         <View style={styles.infoRow}>
           <FontAwesome name="map-marker" size={16} color="#0f0" />
           <Text style={styles.infoText} numberOfLines={1}>{location}</Text>
         </View>
-        
+
         <View style={styles.infoRow}>
           <FontAwesome name="calendar" size={16} color="#0f0" />
           <Text style={styles.infoText}>
@@ -65,13 +66,13 @@ const EventCard: React.FC<EventCardProps> = ({
 
         <View style={styles.footer}>
           <View style={styles.ageRestriction}>
-            <FontAwesome 
-              name={age_restriction === 'all_ages' ? 'universal-access' : 'warning'} 
-              size={16} 
-              color="#0f0" 
+            <FontAwesome
+              name={age_restriction === AgeRestriction.None ? 'universal-access' : 'warning'}
+              size={16}
+              color="#0f0"
             />
             <Text style={styles.ageText}>
-              {age_restriction === 'all_ages' ? 'Tout public' : 'Réservé +18'}
+              {age_restriction === AgeRestriction.None ? 'Tout public' : 'Réservé +18'}
             </Text>
           </View>
           <TouchableOpacity style={styles.button}>

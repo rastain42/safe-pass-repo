@@ -1,8 +1,8 @@
-export type UserRole = 'participant' | 'organizer' | 'admin';
-export type VerificationStatus = 'non_verified' | 'pending' | 'verified';
-
 export interface User {
   id: string;
+  firstName: string;
+  lastName: string;
+  birthDate: string;
   phone: string;
   email: string;
   role: string;
