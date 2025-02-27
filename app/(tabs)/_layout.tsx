@@ -46,16 +46,16 @@ export default function TabLayout() {
             <FontAwesome name="calendar" size={24} color={color} />,
         }}
       />
-      {isOrganizer && (
-        <Tabs.Screen
-          name="EventForm"
-          options={{
-            title: 'Événement +',
-            tabBarIcon: ({ color }) =>
-              <FontAwesome name="calendar-plus-o" size={24} color={color} />,
-          }}
-        />
-      )}
+      <Tabs.Screen
+        name="EventForm"
+        options={{
+          href: isOrganizer ? '/EventForm' : null,
+          title: 'Événement +',
+          tabBarStyle: { display: isOrganizer ? 'flex' : 'none' },
+          tabBarIcon: ({ color }) =>
+            <FontAwesome name="calendar-plus-o" size={24} color={color} />,
+        }}
+      />
       <Tabs.Screen
         name="TicketList"
         options={{
@@ -64,17 +64,18 @@ export default function TabLayout() {
             <FontAwesome name="ticket" size={24} color={color} />,
         }}
       />
-      {isOrganizer && (
-        <Tabs.Screen
-          name="ScanScreen"
-          options={{
-            title: 'Scanner',
-            tabBarIcon: ({ color }) => (
-              <FontAwesome name="qrcode" size={24} color={color} />
-            ),
-          }}
-        />
-      )}
+      <Tabs.Screen
+        name="ScanScreen"
+        options={{
+          title: 'Scanner',
+          tabBarStyle: { display: isOrganizer ? 'flex' : 'none' },
+
+          href: isOrganizer ? '/ScanScreen' : null,
+          tabBarIcon: ({ color }) => (
+            <FontAwesome name="qrcode" size={24} color={color} />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="profile"
         options={{

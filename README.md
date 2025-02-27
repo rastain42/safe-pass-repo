@@ -25,28 +25,9 @@ npx expo start
 
 ensuite connectez vous avec un numéro de test renseigné sur firebase,
 
-numéro : +33782185063
-code OTP : 222222
+numéro orga : +33782185063 || code OTP : 222222
 
-### firebase emulator ( optionnel )
-
-Pour démarrer l'émulateur Firebase,
-rajoutez ce code dans register et login :
-
-installez ensuite les outils Firebase :
-
-```
-npm install -g firebase-tools
-firebase login
-firebase init emulators
-firebase emulators:start
-```
-
-En développement, vous pourrez maintenant utiliser ces numéros de test :
-
-+1 650-555-1234 (code: 123456)
-+1 650-555-5678 (code: 654321)
-Ces numéros fonctionnent automatiquement avec l'émulateur Firebase sans avoir besoin de reCAPTCHA.
+numéro public : +33768509848 || code OTP : 123456
 
 ### stripe
 

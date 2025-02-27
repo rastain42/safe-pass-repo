@@ -4,5 +4,13 @@ todo :
 
 - mettre partout les modal 
 
+- test si email déja existant ? confirmation email ?
+
+- hasher le mdp
+
+- stripe
+
+
+
 - documentation
 - tests unitaires ??

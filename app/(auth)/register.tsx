@@ -6,6 +6,8 @@ import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
 import { firebaseConfig } from '@/firebase/config';
 import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Picker } from '@react-native-picker/picker';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+
 
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format } from 'date-fns';
@@ -33,6 +35,24 @@ export default function RegisterScreen() {
   const [role, setRole] = useState('participant');
   const [verifiedStatus, setVerifiedStatus] = useState('non_verified');
 
+  const checkPhoneNumberExists = async (phoneNumber: string) => {
+    const formattedPhone = phoneNumber.trim()
+      .replace(/\s/g, '')
+      .replace(/[()-]/g, '');
+
+    const phoneWithPrefix = !formattedPhone.startsWith('+')
+      ? formattedPhone.startsWith('0')
+        ? `+33${formattedPhone.slice(1)}`
+        : `+33${formattedPhone}`
+      : formattedPhone;
+
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('phone', '==', phoneWithPrefix));
+    const querySnapshot = await getDocs(q);
+
+    return !querySnapshot.empty;
+  };
+
   const handleSendVerificationCode = async () => {
     try {
       const auth = getAuth();
@@ -47,8 +67,14 @@ export default function RegisterScreen() {
           : `+33${formattedPhone}`;
       }
 
-      const provider = new PhoneAuthProvider(auth);
+      // Vérifier si le numéro existe déjà
+      const exists = await checkPhoneNumberExists(formattedPhone);
+      if (exists) {
+        setError('Ce numéro de téléphone est déjà utilisé');
+        return;
+      }
 
+      const provider = new PhoneAuthProvider(auth);
       const vId = await provider.verifyPhoneNumber(
         formattedPhone,
         recaptchaVerifier.current as any
@@ -71,10 +97,6 @@ export default function RegisterScreen() {
 
   const handleVerifyCode = async () => {
     try {
-      // if (__DEV__ && verificationCode === '123456') {
-      //   router.replace('/(tabs)');
-      //   return;
-      // }
       const auth = getAuth();
       const credential = PhoneAuthProvider.credential(verificationId, verificationCode);
       await signInWithCredential(auth, credential);
