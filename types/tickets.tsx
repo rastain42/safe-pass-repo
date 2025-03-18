@@ -17,5 +17,7 @@ export interface UserTicket {
     qr_code: string;      // QR code généré
     status: TicketStatus; // État du ticket
     created_at: Date;     // Date de création
+    payment_intent_id?: string; // Added property
+
 }
 

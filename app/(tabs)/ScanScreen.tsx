@@ -30,51 +30,86 @@ export default function ScanScreen() {
         getCameraPermissions();
     }, []);
 
+
     const handleBarcodeScanned = async ({ type, data }: { type: string; data: string }) => {
         setScanned(true);
         try {
             const ticketData = JSON.parse(data);
-            const ticketRef = doc(db, 'user_tickets', ticketData.ticketId);
-            const ticketSnap = await getDoc(ticketRef);
 
-            if (!ticketSnap.exists()) {
+            if (!ticketData || !ticketData.ticketId) {
                 setModalContent({
                     title: 'Erreur',
-                    message: 'Billet introuvable',
+                    message: 'QR code invalide ou mal formaté',
                     type: 'error'
                 });
                 setModalVisible(true);
                 return;
             }
 
-            const userTicket = ticketSnap.data();
+            const ticketRef = doc(db, 'user_tickets', ticketData.ticketId);
 
-            if (userTicket.status === TicketStatus.Used) {
+            try {
+                const ticketSnap = await getDoc(ticketRef);
+
+                if (!ticketSnap.exists()) {
+                    setModalContent({
+                        title: 'Erreur',
+                        message: 'Billet introuvable',
+                        type: 'error'
+                    });
+                    setModalVisible(true);
+                    return;
+                }
+
+                const userTicket = ticketSnap.data();
+
+                if (userTicket.status === TicketStatus.Used) {
+                    setModalContent({
+                        title: 'Refusé',
+                        message: 'Ce billet a déjà été scanné',
+                        type: 'warning'
+                    });
+                    setModalVisible(true);
+                    return;
+                }
+
+                await updateDoc(ticketRef, {
+                    status: TicketStatus.Used,
+                    scannedAt: new Date().toISOString()
+                });
+
                 setModalContent({
-                    title: 'Refusé',
-                    message: 'Ce billet a déjà été scanné',
-                    type: 'warning'
+                    title: 'Succès',
+                    message: 'Billet validé avec succès',
+                    type: 'success'
                 });
                 setModalVisible(true);
-                return;
+
+            } catch (firestoreError: any) {
+                console.error('Erreur Firestore:', firestoreError);
+
+                // Gérer spécifiquement l'erreur d'autorisation
+                if (firestoreError.code === 'permission-denied') {
+                    setModalContent({
+                        title: 'Accès refusé',
+                        message: 'Vous n\'avez pas les droits pour scanner ce billet. Vous devez être un organisateur.',
+                        type: 'error'
+                    });
+                } else {
+                    setModalContent({
+                        title: 'Erreur',
+                        message: 'Une erreur est survenue lors de la validation du billet',
+                        type: 'error'
+                    });
+                }
+                setModalVisible(true);
             }
 
-            await updateDoc(ticketRef, {
-                status: TicketStatus.Used,
-                scannedAt: new Date().toISOString()
-            });
-
-            setModalContent({
-                title: 'Succès',
-                message: 'Billet validé avec succès',
-                type: 'success'
-            });
-            setModalVisible(true);
-        } catch (error) {
-            console.error('Erreur lors du scan:', error);
+        } catch (parseError) {
+            console.error('Erreur de parsing JSON:', parseError);
             setModalContent({
                 title: 'Erreur',
-                message: 'QR code invalide',
+                message: 'Format de QR code invalide',
                 type: 'error'
             });
             setModalVisible(true);

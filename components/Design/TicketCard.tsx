@@ -1,234 +1,168 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Text } from '@/components/Themed';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/firebase/config';
 import { UserTicket } from '@/types/tickets';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { FontAwesome } from '@expo/vector-icons';
-import { db } from '@/firebase/config';
-import { getDoc, doc } from 'firebase/firestore';
-import { Event } from '@/types/event';
-import QRCode from 'react-native-qrcode-svg';
-import { Modal } from 'react-native';
 
 interface TicketCardProps {
   ticket: UserTicket;
+  onPress?: () => void;
 }
 
-const TicketCard: React.FC<TicketCardProps> = ({ ticket }) => {
-  const [isOpen, setIsOpen] = useState(false);
+const TicketCard: React.FC<TicketCardProps> = ({ ticket, onPress }) => {
   const [eventName, setEventName] = useState<string>('Chargement...');
-  const [showQR, setShowQR] = useState(false);
-
-  const qrData = JSON.stringify({
-    ticketId: ticket.id,
-    eventId: ticket.event_id,
-    userId: ticket.user_id,
-    qrCode: ticket.qr_code,
-    timestamp: Date.now()
-  });
+  const [eventStartDate, setEventStartDate] = useState<Date | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchEventDetails = async () => {
       try {
         const eventDoc = await getDoc(doc(db, 'events', ticket.event_id));
         if (eventDoc.exists()) {
-          const eventData = eventDoc.data() as Event;
-          setEventName(eventData.name);
+          const eventData = eventDoc.data();
+          setEventName(eventData.name || 'Événement sans nom');
+
+          // Récupération de la date de début
+          if (eventData.start_date) {
+            // Si c'est un timestamp Firestore
+            if (eventData.start_date.toDate) {
+              setEventStartDate(eventData.start_date.toDate());
+            }
+            // Si c'est une chaîne ISO
+            else if (typeof eventData.start_date === 'string') {
+              setEventStartDate(parseISO(eventData.start_date));
+            }
+            // Si c'est déjà un objet Date
+            else if (eventData.start_date instanceof Date) {
+              setEventStartDate(eventData.start_date);
+            }
+            // Si c'est un timestamp en millisecondes
+            else if (typeof eventData.start_date === 'number') {
+              setEventStartDate(new Date(eventData.start_date));
+            }
+          }
+        } else {
+          setEventName('Événement introuvable');
         }
       } catch (error) {
-        console.error('Error fetching event details:', error);
-        setEventName('Événement non trouvé');
+        console.error('Erreur lors de la récupération des détails de l\'événement:', error);
+        setEventName('Erreur de chargement');
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchEventDetails();
   }, [ticket.event_id]);
 
+  // Fonction pour formater la date avec gestion d'erreur
+  const formatEventDate = () => {
+    if (!eventStartDate) return 'Date non disponible';
+    try {
+      return "le " + format(eventStartDate, 'dd MMM yyyy à HH:mm', { locale: fr });
+    } catch (error) {
+      console.error('Erreur de formatage de date:', error);
+      return 'Date invalide';
+    }
+  };
 
   return (
-    <>
-
-      <TouchableOpacity
-        style={styles.ticketAccordion}
-        onPress={() => setIsOpen(!isOpen)}
-        activeOpacity={0.7}
-      >
-        <View style={styles.ticketHeader}>
-          <Text style={styles.headerTitle}>{eventName}</Text>
-          <View style={styles.icon}>
-            <FontAwesome
-              name={isOpen ? "chevron-up" : "chevron-down"}
-              size={16}
-              color="#0f0"
-            />
-          </View>
+    <TouchableOpacity
+      style={styles.container}
+      onPress={onPress}
+      disabled={loading}
+    >
+      <View style={styles.header}>
+        <Text style={styles.eventName}>{eventName}</Text>
+        <View style={[
+          styles.statusBadge,
+          ticket.status === 'valid' ? styles.validBadge : styles.usedBadge
+        ]}>
+          <Text style={styles.statusText}>
+            {ticket.status === 'valid' ? 'Valide' : 'Utilisé'}
+          </Text>
         </View>
+      </View>
 
-        {isOpen && (
-          <View style={styles.ticketContent}>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Date d'achat:</Text>
-              <Text style={styles.value}>
-                {format(ticket.purchase_date, 'dd MMMM yyyy', { locale: fr })}
-              </Text>
-            </View>
+      <View style={styles.content}>
+        <Text style={styles.date}>
+          {eventStartDate
+            ? `${formatEventDate()}`
+            : 'Date de l\'événement non disponible'
+          }
+        </Text>
+        <Text style={styles.price}>{ticket.price} €</Text>
+      </View>
 
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Prix:</Text>
-              <Text style={styles.value}>{ticket.price}€</Text>
-            </View>
-
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>Statut:</Text>
-              <Text style={[styles.value, { color: ticket.status === 'valid' ? '#0f0' : '#ff4444' }]}>
-                {ticket.status}
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              style={styles.qrButton}
-              onPress={() => setShowQR(true)}
-            >
-              <Text style={styles.qrButtonText}>Voir QR Code</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </TouchableOpacity>
-
-      <Modal
-        visible={showQR}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowQR(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowQR(false)}
-        >
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{eventName}</Text>
-            <View style={styles.qrContainer}>
-              <QRCode
-                value={qrData}
-                size={200}
-                color="black"
-                backgroundColor="white"
-              />
-            </View>
-            <Text style={styles.modalText}>Scannez ce code à l'entrée</Text>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setShowQR(false)}
-            >
-              <Text style={styles.closeButtonText}>Fermer</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
-    </>
+      <View style={styles.footer}>
+        <FontAwesome name="qrcode" size={14} color="#0f0" />
+        <Text style={styles.footerText}>Afficher le QR code</Text>
+      </View>
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: '#222',
-    padding: 20,
-    borderRadius: 16,
-    alignItems: 'center',
-    width: '80%',
-  },
-  modalTitle: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  qrContainer: {
-    padding: 20,
-    backgroundColor: 'white',
-    borderRadius: 10,
-    marginBottom: 20,
-  },
-  modalText: {
-    color: '#aaa',
-    marginBottom: 20,
-  },
-  closeButton: {
-    backgroundColor: '#0f0',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  closeButtonText: {
-    color: '#000',
-    fontWeight: 'bold',
-  },
-  ticketAccordion: {
+  container: {
     backgroundColor: '#111',
     borderRadius: 12,
-    padding: 15,
-    marginVertical: 8,
-    shadowColor: '#0f0',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 5,
+    padding: 16,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#0f0',
   },
-  ticketHeader: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 12,
   },
-  headerTitle: {
+  eventName: {
+    color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+    flex: 1,
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  validBadge: {
+    backgroundColor: 'rgba(0, 255, 0, 0.2)',
+  },
+  usedBadge: {
+    backgroundColor: 'rgba(255, 0, 0, 0.2)',
+  },
+  statusText: {
+    fontSize: 12,
     color: '#fff',
+    fontWeight: '500',
   },
-  icon: {
-    backgroundColor: '#222',
-    padding: 5,
-    borderRadius: 8,
+  content: {
+    marginBottom: 12,
   },
-  ticketContent: {
-    marginTop: 10,
-    backgroundColor: '#1a1f1d',
-    padding: 15,
-    borderRadius: 8,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  date: {
+    color: '#888',
+    fontSize: 14,
     marginBottom: 8,
   },
-  label: {
-    color: '#aaa',
-    fontSize: 14,
+  price: {
+    color: '#0f0',
+    fontSize: 16,
     fontWeight: '600',
   },
-  value: {
-    color: '#fff',
-    fontSize: 14,
-  },
-  qrButton: {
-    backgroundColor: '#0f0',
-    padding: 10,
-    borderRadius: 8,
-    marginTop: 10,
+  footer: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  qrButtonText: {
-    color: '#000',
+  footerText: {
+    color: '#0f0',
+    marginLeft: 8,
     fontSize: 14,
-    fontWeight: 'bold',
   },
 });
 

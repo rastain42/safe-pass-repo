@@ -1,16 +1,19 @@
 todo :
 
-- faire en sorte de pas pouvoir s'inscrire avec le meme Numéro
+- sur le ticket detail date de l'evenement et du début
 
-- mettre partout les modal 
+- sur la page achat bouton valider css et scroll$
 
-- test si email déja existant ? confirmation email ?
+- sur le qr code preview mettre le valider au milieu
 
-- hasher le mdp
+- implémenter le support ( envoi email etc)
 
-- stripe
+- à l'achat d'un ticket, le rendre nominatif
 
+- code et profil organisateur
 
+optionnel :
 
+- pas oublier les modal
 - documentation
 - tests unitaires ??

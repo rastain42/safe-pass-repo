@@ -43,7 +43,7 @@ export default function ProfileScreen() {
     <View style={styles.container}>
       <View style={styles.profileCard}>
         <Text style={styles.title}>Profil</Text>
-        
+
         <View style={styles.infoContainer}>
           <Text style={styles.label}>Téléphone</Text>
           <Text style={styles.value}>{user?.phoneNumber || 'Non renseigné'}</Text>
@@ -51,91 +51,86 @@ export default function ProfileScreen() {
 
         <View style={styles.infoContainer}>
           <Text style={styles.label}>Email</Text>
-          <Text style={styles.value}>{user?.email || 'Non renseigné'}</Text>
+          <Text style={styles.value}>{userData?.email || 'Non renseigné'}</Text>
+        </View>
+
+        <View style={styles.infoContainer}>
+          <Text style={styles.label}>Nom</Text>
+          <Text style={styles.value}>{`${userData?.firstName || ''} ${userData?.lastName || ''}`}</Text>
+        </View>
+
+        <View style={styles.infoContainer}>
+          <Text style={styles.label}>Date de naissance</Text>
+          <Text style={styles.value}>{userData?.birthDate || 'Non renseigné'}</Text>
         </View>
 
         <View style={styles.infoContainer}>
           <Text style={styles.label}>Rôle</Text>
           <Text style={styles.value}>{userData?.role || 'Non défini'}</Text>
         </View>
-
         <View style={styles.verificationSection}>
           <View style={styles.verificationStatus}>
-            <FontAwesome 
-              name={userData?.isVerified ? "check-circle" : "exclamation-circle"} 
-              size={24} 
-              color={userData?.isVerified ? "#0f0" : "#ff9800"} 
+            <FontAwesome
+              name={userData?.isVerified ? "check-circle" : "exclamation-circle"}
+              size={24}
+              color={userData?.isVerified ? "#0f0" : "#ff9800"}
             />
             <Text style={styles.verificationText}>
-              {userData?.isVerified 
-                ? "Identité vérifiée" 
+              {userData?.isVerified
+                ? "Identité vérifiée"
                 : "Identité non vérifiée"}
             </Text>
           </View>
-          
+
           {!userData?.isVerified && (
-            <TouchableOpacity 
-              style={styles.verifyButton} 
+            <TouchableOpacity
+              style={styles.verifyButton}
               onPress={handleVerifyIdentity}
             >
               <Text style={styles.verifyButtonText}>Vérifier mon identité</Text>
             </TouchableOpacity>
           )}
         </View>
-
-
-        <View style={styles.settingsContainer}>
-          <View style={styles.settingRow}>
-            <Text style={styles.settingLabel}>Mode sombre</Text>
-            <Switch
-              value={colorScheme === 'dark'}
-              onValueChange={toggleColorScheme}
-              thumbColor={colorScheme === 'dark' ? '#0f0' : '#f4f3f4'}
-              trackColor={{ false: '#767577', true: '#0f06' }}
-            />
-          </View>
-        </View>
-
-        <TouchableOpacity 
-          style={styles.logoutButton} 
+        <TouchableOpacity
+          style={styles.logoutButton}
           onPress={handleLogout}
         >
           <Text style={styles.logoutText}>Se déconnecter</Text>
         </TouchableOpacity>
       </View>
-      
+
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-    verificationSection: {
-        marginTop: 20,
-        borderTopWidth: 1,
-        borderTopColor: '#333',
-        paddingTop: 20,
-      },
-      verificationStatus: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 12,
-      },
-      verificationText: {
-        color: '#fff',
-        fontSize: 16,
-        marginLeft: 8,
-      },
-      verifyButton: {
-        backgroundColor: '#0f0',
-        padding: 15,
-        borderRadius: 8,
-        alignItems: 'center',
-      },
-      verifyButtonText: {
-        color: '#000',
-        fontSize: 16,
-        fontWeight: 'bold',
-      },
+  verificationSection: {
+    marginTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#333',
+    paddingTop: 20,
+  },
+  verificationStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  verificationText: {
+    color: '#fff',
+    fontSize: 16,
+    marginLeft: 8,
+  },
+  verifyButton: {
+    backgroundColor: '#0f0',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  verifyButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   container: {
     flex: 1,
     backgroundColor: '#000',

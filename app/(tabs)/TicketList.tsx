@@ -1,18 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, FlatList, StyleSheet, ActivityIndicator, RefreshControl, ScrollView, Text, Modal } from 'react-native';
 import TicketCard from '@/components/Design/TicketCard';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 import { getAuth } from 'firebase/auth';
 import { UserTicket } from '@/types/tickets';
-import { Text } from '@/components/Themed';
-import RefreshableList from '@/components/Design/RefreshableList';
+import { useLocalSearchParams } from 'expo-router';
+import TicketDetail from '@/components/Design/TicketDetail';
 
 export default function TicketsListScreen() {
   const [tickets, setTickets] = useState<UserTicket[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedTicket, setSelectedTicket] = useState<UserTicket | null>(null);
+  const [showTicketModal, setShowTicketModal] = useState(false);
+
+  const { refresh } = useLocalSearchParams();
 
   const fetchTickets = useCallback(async () => {
     try {
@@ -52,6 +56,18 @@ export default function TicketsListScreen() {
     setRefreshing(false);
   }, [fetchTickets]);
 
+  const handleTicketPress = (ticket: UserTicket) => {
+    setSelectedTicket(ticket);
+    setShowTicketModal(true);
+  };
+
+  // Rafraîchir la liste quand le paramètre refresh change
+  useEffect(() => {
+    if (refresh) {
+      handleRefresh();
+    }
+  }, [refresh, handleRefresh]);
+
   useEffect(() => {
     const initialFetch = async () => {
       await fetchTickets();
@@ -78,25 +94,67 @@ export default function TicketsListScreen() {
 
   if (tickets.length === 0) {
     return (
-      <View style={[styles.container, styles.centered]}>
-        <Text style={styles.emptyText}>Aucun ticket trouvé</Text>
+      <View style={styles.container}>
+        <ScrollView
+          contentContainerStyle={[styles.listContainer, styles.centered, { flex: 1 }]}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor="#0f0"
+              colors={["#0f0"]}
+              title="Actualisation..."
+              titleColor="#fff"
+            />
+          }
+        >
+          <Text style={styles.emptyText}>Aucun ticket trouvé</Text>
+        </ScrollView>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <RefreshableList
+      <FlatList
         data={tickets}
-        renderItem={({ item }) => <TicketCard ticket={item} />}
-        onRefresh={handleRefresh}
-        isRefreshing={refreshing}
+        renderItem={({ item }) => (
+          <TicketCard
+            ticket={item}
+            onPress={() => handleTicketPress(item)}
+          />
+        )}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="#0f0"
+            colors={["#0f0"]}
+            title="Actualisation..."
+            titleColor="#fff"
+          />
+        }
       />
+
+      {/* Modal pour afficher les détails du ticket avec le QR code */}
+      <Modal
+        visible={showTicketModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowTicketModal(false)}
+      >
+        {selectedTicket && (
+          <TicketDetail
+            ticket={selectedTicket}
+            onClose={() => setShowTicketModal(false)}
+          />
+        )}
+      </Modal>
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -117,5 +175,6 @@ const styles = StyleSheet.create({
   emptyText: {
     color: '#fff',
     fontSize: 16,
+    marginBottom: 20,
   }
 });

@@ -7,10 +7,11 @@ import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 import { useColorScheme } from './theme';
 import { User } from '@/types/user';
-import { getAuth } from 'firebase/auth';
-import { onAuthStateChanged } from 'firebase/auth';
 import { StripeProvider } from '@stripe/stripe-react-native';
 
+// Importer depuis votre fichier de configuration personnalisé
+import { auth, getAuthData } from '../firebase/config';
+import { onAuthStateChanged } from 'firebase/auth';
 
 export {
   ErrorBoundary,
@@ -32,7 +33,6 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-
     if (error) throw error;
   }, [error]);
 
@@ -43,9 +43,14 @@ export default function RootLayout() {
   }, [loaded]);
 
   useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    // Utiliser l'instance auth de votre configuration
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
+        // Récupérer les données additionnelles enregistrées dans SecureStore si nécessaire
+        const firstName = await getAuthData('userFirstName') || '';
+        const lastName = await getAuthData('userLastName') || '';
+        const birthDate = await getAuthData('userBirthDate') || '';
+
         const mappedUser: User = {
           id: firebaseUser.uid,
           role: 'user',
@@ -54,9 +59,9 @@ export default function RootLayout() {
           updatedAt: firebaseUser.metadata.lastSignInTime || '',
           email: firebaseUser.email || '',
           phone: firebaseUser.phoneNumber || '',
-          firstName: '',
-          lastName: '',
-          birthDate: ''
+          firstName,
+          lastName,
+          birthDate
         };
         setUser(mappedUser);
       } else {
@@ -70,13 +75,19 @@ export default function RootLayout() {
   if (!loaded) {
     return null;
   }
-  let pk: string = process.env.STRIPE_SECRET_KEY!
-  return <StripeProvider publishableKey="$pk">
-    <RootLayoutNav user={user} />
 
-  </StripeProvider>
+  const publishableKey = process.env.STRIPE_PUBLIC_KEY || "pk_test_51QwQLRQWcv6PLtrYa32YumVBYQPUHpBPazKdVyveRKVpad74Rcj7b1GENohzQNGfoBPnZSkKhSYpf8hdy4jgdKxG00lCpuu2mX";
+
+  return (
+    <StripeProvider
+      publishableKey={publishableKey}
+      urlScheme="safepass"
+      merchantIdentifier="merchant.com.safepass"
+    >
+      <RootLayoutNav user={user} />
+    </StripeProvider>
+  );
 }
-
 
 interface RootLayoutNavProps {
   user: User | null;
