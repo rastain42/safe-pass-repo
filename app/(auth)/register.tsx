@@ -7,11 +7,11 @@ import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 
 import { Picker } from '@react-native-picker/picker';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format } from 'date-fns';
-import CustomModal from '@/components/Design/CustomModal';
 import * as Crypto from 'expo-crypto';
 
 // Import depuis notre configuration Firebase mise à jour
 import { auth, db, firebaseConfig, saveAuthData } from '../../firebase/config';
+import CustomModal from '@/components/design/CustomModal';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -103,7 +103,7 @@ export default function RegisterScreen() {
   };
 
   const handleSupportRequest = () => {
-    router.push('/support');
+    router.push('/screens/SupportScreen');
   };
 
   const handleSendVerificationCode = async () => {
@@ -327,7 +327,7 @@ export default function RegisterScreen() {
 
   const handleCloseSuccessModal = () => {
     setShowSuccessModal(false);
-    router.replace('/(tabs)');
+    router.replace('/(tabs)/Index');
   };
 
   return (
@@ -412,7 +412,7 @@ export default function RegisterScreen() {
               </>
             )}
             {error && <Text style={styles.errorText}>{error}</Text>}
-            <Link href="/(auth)/login" asChild>
+            <Link href="/(auth)/Login" asChild>
               <TouchableOpacity style={styles.linkButton} disabled={loading}>
                 <Text style={[styles.linkText, loading && styles.disabledText]}>
                   Déjà un compte ? Connectez-vous

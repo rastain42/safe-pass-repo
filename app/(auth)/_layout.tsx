@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router';
-import { useColorScheme } from '@/components/useColorScheme';
+import { useColorScheme } from '@/components/basic/useColorScheme';
 
 export default function AuthLayout() {
   const colorScheme = useColorScheme();
@@ -17,13 +17,13 @@ export default function AuthLayout() {
         headerShown: false,
       }}
     >
-     <Stack.Screen 
-        name="login" 
-        options={{ headerShown: false }} 
+      <Stack.Screen
+        name="Login"
+        options={{ headerShown: false }}
       />
-      <Stack.Screen 
-        name="register" 
-        options={{ headerShown: false }} 
+      <Stack.Screen
+        name="Register"
+        options={{ headerShown: false }}
       />
     </Stack>
   );

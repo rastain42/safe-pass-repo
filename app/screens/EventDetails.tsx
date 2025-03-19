@@ -15,9 +15,8 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { collection, doc, getDoc, setDoc } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
 import { auth, db } from '@/firebase/config';
-import PaymentScreen from '../components/PaymentScreen';
+import PaymentScreen from '../../components/payment/PaymentScreen';
 import { Event } from '@/types/event';
 import { UserTicket } from '@/types/tickets';
 import { TicketStatus } from '@/types/enum';
@@ -169,7 +168,7 @@ export default function EventDetailsScreen() {
 
             // Naviguer vers le modal de confirmation
             router.push({
-                pathname: '/purchaseConfirmationScreen',
+                pathname: '/screens/PurchaseConfirmationScreen',
                 params: {
                     eventName: firstEventName,
                     ticketName: `${firstTicketName} ${additionalMessage}`,
@@ -251,7 +250,7 @@ export default function EventDetailsScreen() {
 
             // Naviguer vers le modal de confirmation
             router.push({
-                pathname: '/purchaseConfirmationScreen',
+                pathname: '/screens/PurchaseConfirmationScreen',
                 params: {
                     eventName: firstEventName,
                     ticketName: `${firstTicketName} ${additionalMessage}`,
@@ -299,7 +298,7 @@ export default function EventDetailsScreen() {
                 ref={scrollViewRef}
             >
                 <Image
-                    source={event.image ? { uri: event.image } : require('../assets/images/safepasslogoV1.png')}
+                    source={event.image ? { uri: event.image } : require('../../assets/images/safepasslogoV1.png')}
                     style={styles.image}
                 />
 

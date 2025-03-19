@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, FlatList, StyleSheet, ActivityIndicator, RefreshControl, ScrollView, Text, Modal } from 'react-native';
-import TicketCard from '@/components/Design/TicketCard';
+import TicketCard from '@/components/ticket/TicketCard';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 import { getAuth } from 'firebase/auth';
 import { UserTicket } from '@/types/tickets';
 import { useLocalSearchParams } from 'expo-router';
-import TicketDetail from '@/components/Design/TicketDetail';
+import TicketDetail from '@/components/ticket/TicketDetail';
 
 export default function TicketsListScreen() {
   const [tickets, setTickets] = useState<UserTicket[]>([]);

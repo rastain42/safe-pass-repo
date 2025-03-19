@@ -1,12 +1,12 @@
 import { useEffect, useState, useCallback } from 'react';
 import { View, StyleSheet, Image, ActivityIndicator } from 'react-native';
 import { Event } from '../../types/event';
-import EventCard from '@/components/Design/EventCard';
-import RefreshableList from '@/components/Design/RefreshableList';
+import EventCard from '@/components/event/EventCard';
+import RefreshableList from '@/components/design/RefreshableList';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 import { router } from 'expo-router';
-import { Text } from '@/components/Themed';
+import { Text } from '@/components/basic/Themed';
 
 export default function EventListScreen() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -56,7 +56,7 @@ export default function EventListScreen() {
 
   const handleEventPress = (eventId: string) => {
     router.push({
-      pathname: "/EventDetails",
+      pathname: "/screens/EventDetails",
       params: { id: eventId }
     });
   };

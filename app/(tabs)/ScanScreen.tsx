@@ -4,7 +4,7 @@ import { CameraView, Camera } from "expo-camera";
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 import { TicketStatus } from '@/types/enum';
-import CustomModal from "@/components/Design/CustomModal";
+import CustomModal from "@/components/design/CustomModal";
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;

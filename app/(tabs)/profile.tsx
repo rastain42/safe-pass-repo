@@ -1,19 +1,17 @@
-import { View, Text, StyleSheet, Switch, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { getAuth, signOut } from 'firebase/auth';
 import { useState, useEffect } from 'react';
 import { doc, getDoc, getFirestore } from 'firebase/firestore';
-import { useColorScheme } from '../theme';
 import { router } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 
 export default function ProfileScreen() {
   const [userData, setUserData] = useState<any>(null);
-  const { colorScheme, toggleColorScheme } = useColorScheme();
   const auth = getAuth();
   const user = auth.currentUser;
 
   const handleVerifyIdentity = () => {
-    //router.push('/(auth)/verify-identity');
+    router.push('/screens/VerifyIdentityScreen');
   };
 
   useEffect(() => {
@@ -33,7 +31,7 @@ export default function ProfileScreen() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      router.replace('/(auth)/login');
+      router.replace('/(auth)/Login');
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
     }

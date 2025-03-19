@@ -3,7 +3,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs } from 'expo-router';
 
 import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
+import { useColorScheme } from '@/components/basic/useColorScheme';
 import { db } from '@/firebase/config';
 import { UserRole } from '@/types/enum';
 import { getAuth } from 'firebase/auth';
@@ -39,7 +39,7 @@ export default function TabLayout() {
       }}>
 
       <Tabs.Screen
-        name="index"
+        name="Index"
         options={{
           title: 'Événements',
           tabBarIcon: ({ color }) =>
@@ -77,7 +77,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="Profile"
         options={{
           title: 'Profil',
           tabBarIcon: ({ color }) =>

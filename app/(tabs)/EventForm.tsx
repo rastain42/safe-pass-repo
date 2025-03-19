@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, TextInput, TouchableOpacity, ScrollView, Image } from 'react-native';
-import { Text, View } from '@/components/Themed';
+import { Text, View } from '@/components/basic/Themed';
 import { useForm, Controller } from 'react-hook-form';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format } from 'date-fns';

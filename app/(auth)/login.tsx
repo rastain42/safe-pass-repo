@@ -161,7 +161,7 @@ export default function LoginScreen() {
       await saveAuthData('userId', userId);
 
       // La connexion est réussie
-      router.replace('/(tabs)');
+      router.replace('/(tabs)/Index');
     } catch (err: any) {
       console.error("Erreur d'authentification:", err);
       setError("Erreur d'authentification : " + (err.message || 'Veuillez réessayer'));
@@ -171,7 +171,7 @@ export default function LoginScreen() {
   };
 
   const handleSupportRequest = () => {
-    router.push('/support');
+    router.push('/screens/SupportScreen');
   };
 
   // Pour formater le numéro de téléphone en format international
@@ -298,7 +298,7 @@ export default function LoginScreen() {
         {error && <Text style={styles.errorText}>{error}</Text>}
 
         {error && error.includes("pas enregistré") && (
-          <Link href="/register" asChild>
+          <Link href="/Register" asChild>
             <TouchableOpacity style={styles.linkButton}>
               <Text style={styles.linkText}>S'inscrire maintenant</Text>
             </TouchableOpacity>
@@ -306,7 +306,7 @@ export default function LoginScreen() {
         )}
 
         {!isCodeVerified && (
-          <><Link href="/register" asChild>
+          <><Link href="/Register" asChild>
             <TouchableOpacity style={styles.linkButton} disabled={loading}>
               <Text style={[styles.linkText, loading && styles.disabledText]}>
                 Pas de compte ? Inscrivez-vous
