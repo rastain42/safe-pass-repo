@@ -6,7 +6,6 @@ import RefreshableList from '@/components/design/RefreshableList';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase/config';
 import { router } from 'expo-router';
-import { Text } from '@/components/basic/Themed';
 
 export default function EventListScreen() {
   const [events, setEvents] = useState<Event[]>([]);

@@ -1,12 +1,28 @@
 export interface User {
-  id: string;
+  id?: string;
   firstName: string;
   lastName: string;
-  birthDate: string;
-  phone: string;
-  email: string;
-  role: string;
-  verifiedStatus: boolean;
-  createdAt: String;
-  updatedAt: String;
+  email?: string;
+  phone?: string;
+  birthDate?: Date;
+  isVerified: boolean;
+  verification_status: "not_submitted" | "pending" | "verified" | "rejected";
+  verification_documents?: {
+    id_front?: string;
+    id_back?: string;
+    selfie?: string;
+    rejection_reason?: string;
+    submitted_at?: any;
+  };
+  created_at?: any;
+  updated_at?: any;
+  verified_at?: any;
+  role: "user" | "admin";
+  preferences?: {
+    notifications: {
+      email: boolean;
+      push: boolean;
+      sms?: boolean;
+    };
+  };
 }

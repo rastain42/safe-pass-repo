@@ -1,47 +1,75 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Animated } from 'react-native';
 import { Link, useRouter } from 'expo-router';
-import { PhoneAuthProvider, signInWithCredential } from 'firebase/auth';
 import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
-import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format } from 'date-fns';
-import * as Crypto from 'expo-crypto';
 
-// Import depuis notre configuration Firebase mise à jour
-import { auth, db, firebaseConfig, saveAuthData } from '../../firebase/config';
+// Import des services et hooks
+import { firebaseConfig } from '@/firebase/config';
+import { sendVerificationCode, verifyPhoneCode } from '@/services/auth.service';
+import { createUserProfile, checkEmailExists } from '@/services/user.service';
+import { useForm, validators } from '@/hooks/useForm';
 import CustomModal from '@/components/design/CustomModal';
+import { auth } from '@/firebase/config';
+import { signInWithCredential } from 'firebase/auth';
+import { formatPhone } from '@/utils/formatting';
 
 export default function RegisterScreen() {
+  // Refs
   const router = useRouter();
   const recaptchaVerifier = useRef<FirebaseRecaptchaVerifierModal | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
-
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
-  const [verificationId, setVerificationId] = useState('');
-  const [isCodeSent, setIsCodeSent] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showRegisterForm, setShowRegisterForm] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [birthDate, setBirthDate] = useState('');
-  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [role, setRole] = useState('participant');
-  const [verifiedStatus, setVerifiedStatus] = useState('non_verified');
-
-  // Animation pour les transitions
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  // Fonction d'animation pour transitions douces
-  const fadeOut = () => {
+  // États UI et navigation
+  const [verificationId, setVerificationId] = useState('');
+  const [isCodeSent, setIsCodeSent] = useState(false);
+  const [showRegisterForm, setShowRegisterForm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [userId, setUserId] = useState<string>('');
+
+
+
+  // Formulaire téléphone
+  const phoneForm = useForm({
+    initialValues: {
+      phoneNumber: '',
+      verificationCode: '',
+    },
+    validators: {
+      phoneNumber: validators.phone('Format de numéro invalide'),
+      verificationCode: validators.required('Code requis'),
+    },
+  });
+
+  // Formulaire inscription
+  const registerForm = useForm({
+    initialValues: {
+      email: '',
+      password: '',
+      confirmPassword: '',
+      firstName: '',
+      lastName: '',
+      birthDate: '',
+      role: 'participant',
+    },
+    validators: {
+      email: validators.email(),
+      password: validators.password(),
+      firstName: validators.minLength(2),
+      lastName: validators.minLength(2),
+      birthDate: validators.required(),
+    },
+    onSubmit: handleRegisterUser,
+  });
+
+  // Animations
+  const fadeOut = async () => {
     return new Promise<void>((resolve) => {
       Animated.timing(fadeAnim, {
         toValue: 0,
@@ -59,280 +87,189 @@ export default function RegisterScreen() {
     }).start();
   };
 
-  // Fonction pour hacher le mot de passe avec SHA-256 et sel
-  const hashPassword = async (password: string, uid: string) => {
-    // Utilisation de l'ID utilisateur comme sel pour renforcer la sécurité
-    const salt = uid.slice(0, 16);
-    const passwordWithSalt = password + salt;
-
-    // Utilise expo-crypto pour créer un hash SHA-256
-    const hash = await Crypto.digestStringAsync(
-      Crypto.CryptoDigestAlgorithm.SHA256,
-      passwordWithSalt
-    );
-
-    return { hash, salt };
-  };
-
-  const checkPhoneNumberExists = async (phoneNumber: string) => {
-    const formattedPhone = formatPhone(phoneNumber);
-
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('phone', '==', formattedPhone));
-    const querySnapshot = await getDocs(q);
-
-    return !querySnapshot.empty;
-  };
-
-  const checkEmailExists = async (email: string) => {
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('email', '==', email.toLowerCase().trim()));
-    const querySnapshot = await getDocs(q);
-
-    return !querySnapshot.empty;
-  };
-
-  const formatPhone = (phone: string): string => {
-    const cleaned = phone.trim().replace(/\s/g, '').replace(/[()-]/g, '');
-
-    return !cleaned.startsWith('+')
-      ? cleaned.startsWith('0')
-        ? `+33${cleaned.slice(1)}`
-        : `+33${cleaned}`
-      : cleaned;
-  };
-
+  // Navigation vers l'écran d'aide
   const handleSupportRequest = () => {
     router.push('/screens/SupportScreen');
   };
 
-  const handleSendVerificationCode = async () => {
-    if (!phoneNumber.trim()) {
-      setError('Veuillez entrer un numéro de téléphone');
-      return;
-    }
-
+  /**
+   * Envoyer le code de vérification au numéro de téléphone
+   */
+  async function handleSendVerificationCode() {
     try {
       setLoading(true);
       setError(null);
 
-      const formattedPhone = formatPhone(phoneNumber);
-
-      // Vérifier si le numéro existe déjà
-      const exists = await checkPhoneNumberExists(formattedPhone);
-      if (exists) {
-        setError('Ce numéro de téléphone est déjà utilisé');
-        setLoading(false);
+      // Valider le numéro de téléphone
+      const phoneNumber = phoneForm.fields.phoneNumber.value;
+      if (!phoneNumber.trim()) {
+        setError('Veuillez entrer un numéro de téléphone');
         return;
       }
 
-      const provider = new PhoneAuthProvider(auth);
-      const vId = await provider.verifyPhoneNumber(
-        formattedPhone,
-        recaptchaVerifier.current as any
+      // Envoyer le code de vérification
+      const vId = await sendVerificationCode(
+        phoneNumber,
+        recaptchaVerifier,
       );
 
       setVerificationId(vId);
 
-      // Attendre que fadeOut se termine
+      // Animation de transition
       await fadeOut();
       setIsCodeSent(true);
       fadeIn();
-      setError(null);
+
     } catch (err: any) {
       console.error('Erreur lors de l\'envoi du code:', err);
 
+      // Messages d'erreur spécifiques selon le code d'erreur
       if (err.code === 'auth/invalid-phone-number') {
         setError('Numéro de téléphone invalide');
       } else if (err.code === 'auth/network-request-failed') {
         setError(`Erreur réseau. Vérifiez votre connexion Internet.`);
+      } else if (err.message === 'phone_exists') {
+        setError('Ce numéro de téléphone est déjà utilisé');
       } else {
         setError(`Erreur: ${err.message || 'Veuillez réessayer'}`);
       }
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const handleVerifyCode = async () => {
-    if (!verificationCode.trim()) {
-      setError('Veuillez entrer le code de vérification');
-      return;
-    }
-
+  /**
+   * Vérifier le code reçu par SMS
+   */
+  async function handleVerifyCode() {
     try {
       setLoading(true);
       setError(null);
 
-      const credential = PhoneAuthProvider.credential(verificationId, verificationCode);
-
-      // Authentification
-      await signInWithCredential(auth, credential);
-      setVerifiedStatus('verified');
-
-      // Sauvegarder le numéro de téléphone vérifié
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        await saveAuthData('verifiedPhone', currentUser.phoneNumber || formatPhone(phoneNumber));
+      const verificationCode = phoneForm.fields.verificationCode.value;
+      if (!verificationCode.trim()) {
+        setError('Veuillez entrer le code de vérification');
+        return;
       }
+
+      // Vérifier le code et récupérer l'identifiant utilisateur
+      const credential = await verifyPhoneCode(
+        verificationId,
+        verificationCode,
+        formatPhone(phoneForm.fields.phoneNumber.value)
+      );
+
+      // Créer l'utilisateur avec le credential
+      const userCredential = await signInWithCredential(auth, credential);
+
+      // Stocker l'ID utilisateur
+      setUserId(userCredential.user.uid);
 
       // Animation de transition
       await fadeOut();
-
-      // Une fois que l'animation de fondu est terminée, on change l'état
       setShowRegisterForm(true);
 
-      // Retard avant de réactiver le formulaire pour éviter les problèmes de rendu
-      setTimeout(() => {
-        fadeIn();
-      }, 300);
+      // Retard avant de réactiver le formulaire
+      setTimeout(() => fadeIn(), 300);
+
     } catch (err: any) {
-      console.error('Erreur de vérification:', err);
-      setError(err.code === 'auth/invalid-verification-code'
-        ? "Code de vérification incorrect"
-        : "Erreur de vérification : " + (err.message || 'Veuillez réessayer'));
+      // Gestion d'erreur
     } finally {
       setLoading(false);
     }
-  };
-
-  const validatePassword = (password: string): boolean => {
-    // Au moins 8 caractères, une majuscule, un chiffre et un caractère spécial
-    const minLength = password.length >= 8;
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
-    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-
-    return minLength && hasUpperCase && hasNumber && hasSpecialChar;
-  };
-
-  const validateForm = async (): Promise<boolean> => {
-    // Vérifier l'email
-    if (!email.trim()) {
-      setError("Veuillez entrer une adresse email");
-      return false;
-    }
-
-    // Valider l'email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError("Format d'email invalide");
-      return false;
-    }
-
-    // Vérifier si l'email existe déjà
-    const emailExists = await checkEmailExists(email);
-    if (emailExists) {
-      setError("Cette adresse email est déjà utilisée");
-      return false;
-    }
-
-    // Valider le mot de passe
-    if (!validatePassword(password)) {
-      setError("Le mot de passe doit contenir au moins 8 caractères, une majuscule, un chiffre et un caractère spécial");
-      return false;
-    }
-
-    // Vérifier que les mots de passe correspondent
-    if (password !== confirmPassword) {
-      setError("Les mots de passe ne correspondent pas");
-      return false;
-    }
-
-    // Vérifier le prénom et le nom
-    if (!firstName || firstName.length < 2) {
-      setError("Veuillez entrer un prénom valide (au moins 2 caractères)");
-      return false;
-    }
-
-    if (!lastName || lastName.length < 2) {
-      setError("Veuillez entrer un nom valide (au moins 2 caractères)");
-      return false;
-    }
-
-    // Vérifier la date de naissance
-    if (!birthDate) {
-      setError("Veuillez sélectionner votre date de naissance");
-      return false;
-    }
-
-    return true;
-  };
-
-  const handleRegisterUser = async () => {
+  }
+  async function handleRegisterUser() {
     try {
-      // Valider le formulaire
-      const isValid = await validateForm();
-      if (!isValid) {
+      // Validation manuelle des mots de passe
+      if (registerForm.fields.password.value !== registerForm.fields.confirmPassword.value) {
+        setError("Les mots de passe ne correspondent pas");
+        return;
+      }
+
+      // Valider le formulaire complet
+      if (!registerForm.validateForm()) {
         return;
       }
 
       setLoading(true);
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
-        setError("Impossible de récupérer l'utilisateur après vérification.");
+      setError(null);
+
+      // Vérifier si l'email existe déjà
+      const emailExists = await checkEmailExists(registerForm.fields.email.value);
+      if (emailExists) {
+        setError("Cette adresse email est déjà utilisée");
         setLoading(false);
         return;
       }
 
-      // Hacher le mot de passe avec le sel (uid)
-      const { hash: passwordHash, salt: passwordSalt } = await hashPassword(password, currentUser.uid);
+      // Convertir la date de naissance
+      let birthDate;
+      if (registerForm.fields.birthDate.value) {
+        const [day, month, year] = registerForm.fields.birthDate.value.split('/');
+        birthDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      } else {
+        birthDate = null;
+      }
 
-      const userRef = doc(db, 'users', currentUser.uid);
-      const userData = {
-        phone: currentUser.phoneNumber || formatPhone(phoneNumber),
-        email: email.toLowerCase().trim(),
-        password_hash: passwordHash,
-        password_salt: passwordSalt,
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        birth_date: birthDate,
-        role: role,
-        verified_status: verifiedStatus,
-        created_at: serverTimestamp(),
-        updated_at: serverTimestamp(),
-      };
-
-      await setDoc(userRef, userData);
-
-      // Sauvegarder les données dans SecureStore pour la persistance
-      await saveAuthData('userId', currentUser.uid);
-      await saveAuthData('userFirstName', firstName.trim());
-      await saveAuthData('userLastName', lastName.trim());
-      await saveAuthData('userBirthDate', birthDate);
-      await saveAuthData('userEmail', email.toLowerCase().trim());
-      await saveAuthData('userRole', role);
-      await saveAuthData('lastLogin', new Date().toISOString());
+      // Créer le profil utilisateur
+      await createUserProfile({
+        userId, // Inclure l'ID utilisateur
+        firstName: registerForm.fields.firstName.value,
+        lastName: registerForm.fields.lastName.value,
+        email: registerForm.fields.email.value.toLowerCase().trim(),
+        phone: formatPhone(phoneForm.fields.phoneNumber.value),
+        birthDate, // Date convertie
+        password: registerForm.fields.password.value,
+        role: registerForm.fields.role.value
+      });
 
       setShowSuccessModal(true);
+
     } catch (err: any) {
       console.error("Erreur lors de l'enregistrement:", err);
       setError("Erreur lors de l'enregistrement : " + (err.message || 'Veuillez réessayer'));
+    } finally {
       setLoading(false);
     }
-  };
+  }
 
-  // Gestion des entrées avec moins de scroll auto
+  // Gérer les entrées avec moins de scroll auto
   const handleInputFocus = (position: number) => {
     if (scrollViewRef.current) {
-      // Ajouter un délai pour s'assurer que le clavier est visible
       setTimeout(() => {
-        scrollViewRef.current?.scrollTo({
-          y: position,
-          animated: true
-        });
+        scrollViewRef.current?.scrollTo({ y: position, animated: true });
       }, 200);
     }
   };
 
+  // Fermer la modale de succès et rediriger
   const handleCloseSuccessModal = () => {
     setShowSuccessModal(false);
     router.replace('/(tabs)/Index');
   };
 
+  // Sélectionner une date de naissance
+  const handleDateSelect = (date: Date) => {
+    registerForm.setFieldValue('birthDate', format(date, 'dd/MM/yyyy'));
+    setDatePickerVisibility(false);
+  };
+
+  // Gérer le retour à la modification du numéro
+  const handleBackToPhone = async () => {
+    if (loading) return;
+    setLoading(true);
+    await fadeOut();
+    setIsCodeSent(false);
+    phoneForm.setFieldValue('verificationCode', '');
+    setError(null);
+    fadeIn();
+    setLoading(false);
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Inscription</Text>
+
       <FirebaseRecaptchaVerifierModal
         ref={recaptchaVerifier}
         firebaseConfig={firebaseConfig}
@@ -358,8 +295,8 @@ export default function RegisterScreen() {
                   style={styles.input}
                   placeholder="Ex: 0612345678"
                   placeholderTextColor="#888"
-                  value={phoneNumber}
-                  onChangeText={setPhoneNumber}
+                  value={phoneForm.fields.phoneNumber.value}
+                  onChangeText={(text) => phoneForm.setFieldValue('phoneNumber', text)}
                   keyboardType="phone-pad"
                   editable={!loading}
                   autoComplete="tel"
@@ -379,8 +316,8 @@ export default function RegisterScreen() {
                   style={styles.input}
                   placeholder="Entrez le code reçu par SMS"
                   placeholderTextColor="#888"
-                  value={verificationCode}
-                  onChangeText={setVerificationCode}
+                  value={phoneForm.fields.verificationCode.value}
+                  onChangeText={(text) => phoneForm.setFieldValue('verificationCode', text)}
                   keyboardType="number-pad"
                   maxLength={6}
                   editable={!loading}
@@ -395,23 +332,16 @@ export default function RegisterScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.linkButton}
-                  onPress={async () => {
-                    if (loading) return;
-                    setLoading(true);
-                    await fadeOut();
-                    setIsCodeSent(false);
-                    setVerificationCode('');
-                    setError(null);
-                    fadeIn();
-                    setLoading(false);
-                  }}
+                  onPress={handleBackToPhone}
                   disabled={loading}
                 >
                   <Text style={styles.linkText}>Modifier le numéro</Text>
                 </TouchableOpacity>
               </>
             )}
+
             {error && <Text style={styles.errorText}>{error}</Text>}
+
             <Link href="/(auth)/Login" asChild>
               <TouchableOpacity style={styles.linkButton} disabled={loading}>
                 <Text style={[styles.linkText, loading && styles.disabledText]}>
@@ -419,6 +349,7 @@ export default function RegisterScreen() {
                 </Text>
               </TouchableOpacity>
             </Link>
+
             <TouchableOpacity
               style={styles.linkButton}
               onPress={handleSupportRequest}
@@ -448,35 +379,43 @@ export default function RegisterScreen() {
                   style={[styles.input, { color: '#fff' }]}
                   placeholder="Ex: monemail@exemple.com"
                   placeholderTextColor="#888"
-                  value={email}
-                  onChangeText={setEmail}
+                  value={registerForm.fields.email.value}
+                  onChangeText={(text) => registerForm.setFieldValue('email', text)}
+                  onBlur={() => registerForm.handleBlur('email')}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   onFocus={() => handleInputFocus(0)}
                   editable={!loading}
                   autoComplete="email"
                 />
+                {registerForm.fields.email.error && (
+                  <Text style={styles.fieldError}>{registerForm.fields.email.error}</Text>
+                )}
 
                 <Text style={styles.label}>Mot de passe</Text>
                 <TextInput
                   style={[styles.input, { color: '#fff' }]}
                   placeholder="Mot de passe"
                   placeholderTextColor="#888"
-                  value={password}
-                  onChangeText={setPassword}
+                  value={registerForm.fields.password.value}
+                  onChangeText={(text) => registerForm.setFieldValue('password', text)}
+                  onBlur={() => registerForm.handleBlur('password')}
                   secureTextEntry
                   onFocus={() => handleInputFocus(60)}
                   editable={!loading}
                   autoComplete="password-new"
                 />
+                {registerForm.fields.password.error && (
+                  <Text style={styles.fieldError}>{registerForm.fields.password.error}</Text>
+                )}
 
                 <Text style={styles.label}>Confirmer le mot de passe</Text>
                 <TextInput
                   style={[styles.input, { color: '#fff' }]}
                   placeholder="Confirmez votre mot de passe"
                   placeholderTextColor="#888"
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
+                  value={registerForm.fields.confirmPassword.value}
+                  onChangeText={(text) => registerForm.setFieldValue('confirmPassword', text)}
                   secureTextEntry
                   onFocus={() => handleInputFocus(120)}
                   editable={!loading}
@@ -493,24 +432,32 @@ export default function RegisterScreen() {
                   style={[styles.input, { color: '#fff' }]}
                   placeholder="Ex: Jean"
                   placeholderTextColor="#888"
-                  value={firstName}
-                  onChangeText={setFirstName}
+                  value={registerForm.fields.firstName.value}
+                  onChangeText={(text) => registerForm.setFieldValue('firstName', text)}
+                  onBlur={() => registerForm.handleBlur('firstName')}
                   onFocus={() => handleInputFocus(220)}
                   editable={!loading}
                   autoComplete="name-given"
                 />
+                {registerForm.fields.firstName.error && (
+                  <Text style={styles.fieldError}>{registerForm.fields.firstName.error}</Text>
+                )}
 
                 <Text style={styles.label}>Nom</Text>
                 <TextInput
                   style={[styles.input, { color: '#fff' }]}
                   placeholder="Ex: Dupont"
                   placeholderTextColor="#888"
-                  value={lastName}
-                  onChangeText={setLastName}
+                  value={registerForm.fields.lastName.value}
+                  onChangeText={(text) => registerForm.setFieldValue('lastName', text)}
+                  onBlur={() => registerForm.handleBlur('lastName')}
                   onFocus={() => handleInputFocus(280)}
                   editable={!loading}
                   autoComplete="name-family"
                 />
+                {registerForm.fields.lastName.error && (
+                  <Text style={styles.fieldError}>{registerForm.fields.lastName.error}</Text>
+                )}
 
                 <Text style={styles.label}>Date de naissance</Text>
                 <TouchableOpacity
@@ -518,27 +465,27 @@ export default function RegisterScreen() {
                   onPress={() => !loading && setDatePickerVisibility(true)}
                   disabled={loading}
                 >
-                  <Text style={{ color: birthDate ? '#fff' : '#888' }}>
-                    {birthDate || 'Sélectionner une date'}
+                  <Text style={{ color: registerForm.fields.birthDate.value ? '#fff' : '#888' }}>
+                    {registerForm.fields.birthDate.value || 'Sélectionner une date'}
                   </Text>
                 </TouchableOpacity>
+                {registerForm.fields.birthDate.error && (
+                  <Text style={styles.fieldError}>{registerForm.fields.birthDate.error}</Text>
+                )}
 
                 <DateTimePickerModal
                   isVisible={isDatePickerVisible}
                   mode="date"
-                  maximumDate={new Date()} // Pas de date future
-                  onConfirm={(date) => {
-                    setBirthDate(format(date, 'dd/MM/yyyy'));
-                    setDatePickerVisibility(false);
-                  }}
+                  maximumDate={new Date()}
+                  onConfirm={handleDateSelect}
                   onCancel={() => setDatePickerVisibility(false)}
                 />
 
                 <Text style={styles.label}>Rôle</Text>
                 <View style={[styles.input, { paddingVertical: 0, paddingHorizontal: 0 }]}>
                   <Picker
-                    selectedValue={role}
-                    onValueChange={(value) => !loading && setRole(value)}
+                    selectedValue={registerForm.fields.role.value}
+                    onValueChange={(value) => !loading && registerForm.setFieldValue('role', value)}
                     style={{ color: '#fff', backgroundColor: 'transparent' }}
                     dropdownIconColor="#fff"
                     enabled={!loading}
@@ -550,7 +497,7 @@ export default function RegisterScreen() {
 
                 <TouchableOpacity
                   style={[styles.button, loading && styles.disabledButton]}
-                  onPress={handleRegisterUser}
+                  onPress={() => registerForm.submitForm()}
                   disabled={loading}
                 >
                   <Text style={styles.buttonText}>Enregistrer</Text>
@@ -562,6 +509,7 @@ export default function RegisterScreen() {
           </KeyboardAvoidingView>
         )}
       </Animated.View>
+
       <CustomModal
         visible={showSuccessModal}
         onClose={handleCloseSuccessModal}
@@ -574,7 +522,6 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  // Styles inchangés
   container: {
     flex: 1,
     backgroundColor: '#000',
@@ -645,6 +592,13 @@ const styles = StyleSheet.create({
     color: '#ff4444',
     marginBottom: 16,
     textAlign: 'center',
+  },
+  fieldError: {
+    color: '#ff4444',
+    fontSize: 12,
+    marginTop: -12,
+    marginBottom: 8,
+    textAlign: 'left',
   },
   passwordRequirements: {
     color: '#888',

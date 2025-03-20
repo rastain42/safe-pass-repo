@@ -17,7 +17,6 @@ export interface UserTicket {
     qr_code: string;      // QR code généré
     status: TicketStatus; // État du ticket
     created_at: Date;     // Date de création
-    payment_intent_id?: string; // Added property
-
+    payment_intent_id?: string; // ID du paiement Stripe
+    validation_date?: Date; // Date de validation/utilisation du ticket
 }
-

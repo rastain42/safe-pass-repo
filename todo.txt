@@ -17,3 +17,16 @@ optionnel :
 - pas oublier les modal
 - documentation
 - tests unitaires ??
+
+
+hooks/
+├── useAuth.ts            // Gestion auth
+├── useForm.ts            // Validation formulaires
+├── useVerifyIdentity.ts  // Vérification identité
+└── useTickets.ts         // Gestion tickets
+
+utils/
+├── validation.ts         // Validation formulaires
+├── formatting.ts         // Formatage (dates, téléphone, etc.)
+├── crypto.ts             // Encryption/hachage
+└── helpers.ts            // Autres utilitaires
