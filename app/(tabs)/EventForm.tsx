@@ -12,6 +12,8 @@ import { getAuth } from 'firebase/auth';
 import { Picker } from '@react-native-picker/picker';
 import { AgeRestriction } from '@/types/enum';
 import { EventTicket } from '@/types/tickets';
+import { router } from 'expo-router';
+import CustomModal from '@/components/design/CustomModal';
 
 interface EventForm {
   name: string;
@@ -38,6 +40,9 @@ export default function EventFormScreen() {
     quantity: null as unknown as number,
     description: '',
   });
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   const handleAddTicket = () => {
     if (!currentTicket.price || !currentTicket.quantity) {
@@ -61,12 +66,14 @@ export default function EventFormScreen() {
     setShowTicketForm(false);
   };
 
+
+
   const handleRemoveTicket = (ticketId: string) => {
     setTickets(tickets.filter(t => t.id !== ticketId));
   };
 
 
-  const { control, handleSubmit, formState: { errors }, watch } = useForm<EventForm>({
+  const { control, handleSubmit, formState: { errors }, watch, reset } = useForm<EventForm>({
     defaultValues: {
       name: '',
       description: '',
@@ -106,11 +113,14 @@ export default function EventFormScreen() {
 
   const onSubmit = async (data: EventForm) => {
     try {
+      setIsSubmitting(true);
+      setSubmissionError(null);
+
       const auth = getAuth();
       const user = auth.currentUser;
 
       if (!user) {
-        console.error('Utilisateur non connecté');
+        setSubmissionError('Utilisateur non connecté');
         return;
       }
 
@@ -128,16 +138,35 @@ export default function EventFormScreen() {
       };
 
       await setDoc(newEventRef, formData);
-      // Optionnel: navigation.goBack() ou reset du formulaire
+      setShowSuccessModal(true);
 
     } catch (error) {
       console.error('Erreur lors de la création de l\'événement:', error);
+      setSubmissionError('Une erreur est survenue lors de la création de l\'événement');
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    reset();
+    setImageUri(null);
+    setTickets([]);
+
+    router.push('/(tabs)/Index');
   };
 
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Créer un Événement</Text>
+      <CustomModal
+        visible={showSuccessModal}
+        onClose={handleCloseSuccessModal}
+        title="Événement créé !"
+        message="Votre événement a été créé avec succès et est maintenant visible pour les participants."
+        type="success"
+      />
       <View style={styles.formContainer}>
         <Text style={styles.label}>Nom</Text>
         <Controller
@@ -251,7 +280,7 @@ export default function EventFormScreen() {
                     key={restriction}
                     label={restriction}
                     value={restriction}
-                    color="#fff"
+                    color="#000"
                   />
                 ))}
               </Picker>
@@ -449,6 +478,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   ticketInfo: {
+    backgroundColor: 'transparent',
     flex: 1,
   },
   ticketName: {
@@ -551,7 +581,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   pickerContainer: {
-    backgroundColor: '#222',
+    backgroundColor: 'transparent',
     borderRadius: 8,
     marginBottom: 16,
     overflow: 'hidden',
@@ -560,5 +590,13 @@ const styles = StyleSheet.create({
     color: '#fff',
     backgroundColor: '#222',
     height: 50,
+  },
+  errorContainer: {
+    backgroundColor: 'rgba(255, 0, 0, 0.1)',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#ff4444',
   },
 });
