@@ -1,165 +1,53 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { StyleSheet, TextInput, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { Text, View } from '@/components/basic/Themed';
-import { useForm, Controller } from 'react-hook-form';
+import { Controller } from 'react-hook-form';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format } from 'date-fns';
-import * as ImagePicker from 'expo-image-picker';
-import * as ImageManipulator from 'expo-image-manipulator';
-import { doc, setDoc, collection } from 'firebase/firestore';
-import { db } from '@/firebase/config';
-import { getAuth } from 'firebase/auth';
 import { Picker } from '@react-native-picker/picker';
 import { AgeRestriction } from '@/types/enum';
-import { EventTicket } from '@/types/tickets';
-import { router } from 'expo-router';
 import CustomModal from '@/components/design/CustomModal';
-
-interface EventForm {
-  name: string;
-  description: string;
-  location: string;
-  start_date: Date;
-  end_date: Date;
-  capacity: number;
-  age_restriction: AgeRestriction;
-  image?: string;
-  tickets: EventTicket[];
-}
+import { useEventForm } from '@/hooks/useEventForm';
 
 export default function EventFormScreen() {
-  const [showStartPicker, setShowStartPicker] = useState(false);
-  const [showEndPicker, setShowEndPicker] = useState(false);
-  const [imageUri, setImageUri] = useState<string | null>(null);
-  const [tickets, setTickets] = useState<EventTicket[]>([]);
-  const [showTicketForm, setShowTicketForm] = useState(false);
-  const [currentTicket, setCurrentTicket] = useState<EventTicket>({
-    id: '',
-    name: '',
-    price: null as unknown as number,
-    quantity: null as unknown as number,
-    description: '',
-  });
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const {
+    // Form state and handlers
+    control,
+    errors,
+    handleSubmit,
+    onSubmit,
 
-  const handleAddTicket = () => {
-    if (!currentTicket.price || !currentTicket.quantity) {
-      return; // Ou afficher une erreur
-    }
+    // Image state
+    imageUri,
+    openImagePicker,
 
-    setTickets([...tickets, {
-      ...currentTicket,
-      id: Date.now().toString(),
-      price: currentTicket.price || 0,
-      quantity: currentTicket.quantity || 0,
-    }]);
+    // Date pickers
+    showStartPicker,
+    setShowStartPicker,
+    showEndPicker,
+    setShowEndPicker,
+    start_date,
 
-    setCurrentTicket({
-      id: '',
-      name: '',
-      price: null as unknown as number,
-      quantity: null as unknown as number,
-      description: '',
-    });
-    setShowTicketForm(false);
-  };
+    // Submission state
+    showSuccessModal,
+    isSubmitting,
+    submissionError,
+    handleCloseSuccessModal,
 
-
-
-  const handleRemoveTicket = (ticketId: string) => {
-    setTickets(tickets.filter(t => t.id !== ticketId));
-  };
-
-
-  const { control, handleSubmit, formState: { errors }, watch, reset } = useForm<EventForm>({
-    defaultValues: {
-      name: '',
-      description: '',
-      location: '',
-      start_date: new Date(),
-      end_date: new Date(),
-      capacity: 0,
-      age_restriction: AgeRestriction.None,
-    },
-  });
-
-  const start_date = watch('start_date');
-
-  const openImagePicker = async () => {
-    try {
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permissionResult.granted) return;
-
-      const picked = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [3, 5],
-        quality: 1,
-      });
-
-      if (!picked.canceled) {
-        const cropped = await ImageManipulator.manipulateAsync(
-          picked.assets[0].uri,
-          [{ crop: { originX: 0, originY: 0, width: 300, height: 300 } }],
-          { compress: 1, format: ImageManipulator.SaveFormat.PNG }
-        );
-        setImageUri(cropped.uri);
-      }
-    } catch (error) {
-    }
-  };
-
-  const onSubmit = async (data: EventForm) => {
-    try {
-      setIsSubmitting(true);
-      setSubmissionError(null);
-
-      const auth = getAuth();
-      const user = auth.currentUser;
-
-      if (!user) {
-        setSubmissionError('Utilisateur non connecté');
-        return;
-      }
-
-      const eventsRef = collection(db, 'events');
-      const newEventRef = doc(eventsRef); // Génère un nouvel ID automatiquement
-
-      const formData = {
-        ...data,
-        id: newEventRef.id,
-        creatorId: user.uid,
-        image: imageUri,
-        tickets: tickets,
-        created_at: new Date(),
-        updated_at: new Date(),
-      };
-
-      await setDoc(newEventRef, formData);
-      setShowSuccessModal(true);
-
-    } catch (error) {
-      console.error('Erreur lors de la création de l\'événement:', error);
-      setSubmissionError('Une erreur est survenue lors de la création de l\'événement');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleCloseSuccessModal = () => {
-    setShowSuccessModal(false);
-    reset();
-    setImageUri(null);
-    setTickets([]);
-
-    router.push('/(tabs)/Index');
-  };
+    // Ticket management
+    tickets,
+    showTicketForm,
+    currentTicket,
+    setShowTicketForm,
+    handleAddTicket,
+    handleRemoveTicket,
+    updateTicketField,
+  } = useEventForm();
 
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Créer un Événement</Text>
+
       <CustomModal
         visible={showSuccessModal}
         onClose={handleCloseSuccessModal}
@@ -167,6 +55,7 @@ export default function EventFormScreen() {
         message="Votre événement a été créé avec succès et est maintenant visible pour les participants."
         type="success"
       />
+
       <View style={styles.formContainer}>
         <Text style={styles.label}>Nom</Text>
         <Controller
@@ -258,7 +147,6 @@ export default function EventFormScreen() {
           name="capacity"
         />
         {errors.capacity && <Text style={styles.errorText}>{errors.capacity.message}</Text>}
-
 
         <Text style={styles.label}>Restriction d'âge</Text>
         <Controller
@@ -359,7 +247,7 @@ export default function EventFormScreen() {
         <View style={styles.ticketsSection}>
           <Text style={styles.sectionTitle}>Tickets</Text>
 
-          {tickets.map((ticket) => (
+          {tickets.map((ticket: { id: string; name: string; price: number; quantity: number; description?: string }) => (
             <View key={ticket.id} style={styles.ticketCard}>
               <View style={styles.ticketInfo}>
                 <Text style={styles.ticketName}>{ticket.name}</Text>
@@ -386,7 +274,7 @@ export default function EventFormScreen() {
                 placeholder="Nom du ticket"
                 placeholderTextColor="#888"
                 value={currentTicket.name}
-                onChangeText={(text) => setCurrentTicket({ ...currentTicket, name: text })}
+                onChangeText={(text) => updateTicketField('name', text)}
               />
               <TextInput
                 style={styles.input}
@@ -394,10 +282,7 @@ export default function EventFormScreen() {
                 placeholderTextColor="#888"
                 keyboardType="numeric"
                 value={currentTicket.price ? currentTicket.price.toString() : ''}
-                onChangeText={(text) => setCurrentTicket({
-                  ...currentTicket,
-                  price: text ? parseFloat(text) : null as unknown as number
-                })}
+                onChangeText={(text) => updateTicketField('price', text ? parseFloat(text) : null)}
               />
               <TextInput
                 style={styles.input}
@@ -405,10 +290,7 @@ export default function EventFormScreen() {
                 placeholderTextColor="#888"
                 keyboardType="numeric"
                 value={currentTicket.quantity ? currentTicket.quantity.toString() : ''}
-                onChangeText={(text) => setCurrentTicket({
-                  ...currentTicket,
-                  quantity: text ? parseInt(text) : null as unknown as number
-                })}
+                onChangeText={(text) => updateTicketField('quantity', text ? parseInt(text) : null)}
               />
               <TextInput
                 style={[styles.input, styles.textArea]}
@@ -416,7 +298,7 @@ export default function EventFormScreen() {
                 placeholderTextColor="#888"
                 multiline
                 value={currentTicket.description}
-                onChangeText={(text) => setCurrentTicket({ ...currentTicket, description: text })}
+                onChangeText={(text) => updateTicketField('description', text)}
               />
               <View style={styles.ticketFormButtons}>
                 <TouchableOpacity
@@ -443,15 +325,25 @@ export default function EventFormScreen() {
           )}
         </View>
 
+        {submissionError && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{submissionError}</Text>
+          </View>
+        )}
+
         <TouchableOpacity
-          style={[styles.button, Object.keys(errors).length > 0 ? styles.buttonDisabled : null]}
+          style={[
+            styles.button,
+            (Object.keys(errors).length > 0 || isSubmitting) ? styles.buttonDisabled : null
+          ]}
           onPress={handleSubmit(onSubmit)}
-          disabled={Object.keys(errors).length > 0}
+          disabled={Object.keys(errors).length > 0 || isSubmitting}
         >
-          <Text style={styles.buttonText}>Créer l'événement</Text>
+          <Text style={styles.buttonText}>
+            {isSubmitting ? 'Création en cours...' : 'Créer l\'événement'}
+          </Text>
         </TouchableOpacity>
       </View>
-
     </ScrollView>
   );
 }

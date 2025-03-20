@@ -139,3 +139,5 @@ stripe.webhook="whsec_webhook"
    - Simplifier le JSX
 
 2. **Validation**: Tester les fonctionnalités après chaque refactorisation
+
+peut tu optimiser ce fichier en utilisant #folder:services #folder:hooks #folder:utils

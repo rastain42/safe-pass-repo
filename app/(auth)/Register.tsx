@@ -1,316 +1,58 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Animated } from 'react-native';
 import { Link, useRouter } from 'expo-router';
-import { PhoneAuthProvider, signInWithCredential } from 'firebase/auth';
 import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
-import { doc, setDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format } from 'date-fns';
-import * as Crypto from 'expo-crypto';
 
-// Import depuis notre configuration Firebase mise à jour
-import { auth, db, firebaseConfig, saveAuthData } from '../../firebase/config';
+// Config et hooks
+import { firebaseConfig } from '@/firebase/config';
+import { useRegistration } from '@/hooks/useRegistration';
 import CustomModal from '@/components/design/CustomModal';
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const recaptchaVerifier = useRef<FirebaseRecaptchaVerifierModal | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
-  const [verificationId, setVerificationId] = useState('');
-  const [isCodeSent, setIsCodeSent] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showRegisterForm, setShowRegisterForm] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const {
+    // États
+    phoneNumber,
+    setPhoneNumber,
+    verificationCode,
+    setVerificationCode,
+    email,
+    setEmail,
+    password,
+    setPassword,
+    confirmPassword,
+    setConfirmPassword,
+    firstName,
+    setFirstName,
+    lastName,
+    setLastName,
+    birthDate,
+    setBirthDate,
+    role,
+    setRole,
+    isCodeSent,
+    showRegisterForm,
+    error,
+    loading,
+    isDatePickerVisible,
+    showSuccessModal,
+    fadeAnim,
+    recaptchaVerifier,
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [birthDate, setBirthDate] = useState('');
-  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [role, setRole] = useState('participant');
-  const [verifiedStatus, setVerifiedStatus] = useState('non_verified');
-
-  // Animation pour les transitions
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-
-  // Fonction d'animation pour transitions douces
-  const fadeOut = () => {
-    return new Promise<void>((resolve) => {
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }).start(() => resolve());
-    });
-  };
-
-  const fadeIn = () => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  // Fonction pour hacher le mot de passe avec SHA-256 et sel
-  const hashPassword = async (password: string, uid: string) => {
-    // Utilisation de l'ID utilisateur comme sel pour renforcer la sécurité
-    const salt = uid.slice(0, 16);
-    const passwordWithSalt = password + salt;
-
-    // Utilise expo-crypto pour créer un hash SHA-256
-    const hash = await Crypto.digestStringAsync(
-      Crypto.CryptoDigestAlgorithm.SHA256,
-      passwordWithSalt
-    );
-
-    return { hash, salt };
-  };
-
-  const checkPhoneNumberExists = async (phoneNumber: string) => {
-    const formattedPhone = formatPhone(phoneNumber);
-
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('phone', '==', formattedPhone));
-    const querySnapshot = await getDocs(q);
-
-    return !querySnapshot.empty;
-  };
-
-  const checkEmailExists = async (email: string) => {
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('email', '==', email.toLowerCase().trim()));
-    const querySnapshot = await getDocs(q);
-
-    return !querySnapshot.empty;
-  };
-
-  const formatPhone = (phone: string): string => {
-    const cleaned = phone.trim().replace(/\s/g, '').replace(/[()-]/g, '');
-
-    return !cleaned.startsWith('+')
-      ? cleaned.startsWith('0')
-        ? `+33${cleaned.slice(1)}`
-        : `+33${cleaned}`
-      : cleaned;
-  };
-
-  const handleSupportRequest = () => {
-    router.push('/screens/SupportScreen');
-  };
-
-  const handleSendVerificationCode = async () => {
-    if (!phoneNumber.trim()) {
-      setError('Veuillez entrer un numéro de téléphone');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const formattedPhone = formatPhone(phoneNumber);
-
-      // Vérifier si le numéro existe déjà
-      const exists = await checkPhoneNumberExists(formattedPhone);
-      if (exists) {
-        setError('Ce numéro de téléphone est déjà utilisé');
-        setLoading(false);
-        return;
-      }
-
-      const provider = new PhoneAuthProvider(auth);
-      const vId = await provider.verifyPhoneNumber(
-        formattedPhone,
-        recaptchaVerifier.current as any
-      );
-
-      setVerificationId(vId);
-
-      // Attendre que fadeOut se termine
-      await fadeOut();
-      setIsCodeSent(true);
-      fadeIn();
-      setError(null);
-    } catch (err: any) {
-      console.error('Erreur lors de l\'envoi du code:', err);
-
-      if (err.code === 'auth/invalid-phone-number') {
-        setError('Numéro de téléphone invalide');
-      } else if (err.code === 'auth/network-request-failed') {
-        setError(`Erreur réseau. Vérifiez votre connexion Internet.`);
-      } else {
-        setError(`Erreur: ${err.message || 'Veuillez réessayer'}`);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyCode = async () => {
-    if (!verificationCode.trim()) {
-      setError('Veuillez entrer le code de vérification');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const credential = PhoneAuthProvider.credential(verificationId, verificationCode);
-
-      // Authentification
-      await signInWithCredential(auth, credential);
-      setVerifiedStatus('verified');
-
-      // Sauvegarder le numéro de téléphone vérifié
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        await saveAuthData('verifiedPhone', currentUser.phoneNumber || formatPhone(phoneNumber));
-      }
-
-      // Animation de transition
-      await fadeOut();
-
-      // Une fois que l'animation de fondu est terminée, on change l'état
-      setShowRegisterForm(true);
-
-      // Retard avant de réactiver le formulaire pour éviter les problèmes de rendu
-      setTimeout(() => {
-        fadeIn();
-      }, 300);
-    } catch (err: any) {
-      console.error('Erreur de vérification:', err);
-      setError(err.code === 'auth/invalid-verification-code'
-        ? "Code de vérification incorrect"
-        : "Erreur de vérification : " + (err.message || 'Veuillez réessayer'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const validatePassword = (password: string): boolean => {
-    // Au moins 8 caractères, une majuscule, un chiffre et un caractère spécial
-    const minLength = password.length >= 8;
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
-    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-
-    return minLength && hasUpperCase && hasNumber && hasSpecialChar;
-  };
-
-  const validateForm = async (): Promise<boolean> => {
-    // Vérifier l'email
-    if (!email.trim()) {
-      setError("Veuillez entrer une adresse email");
-      return false;
-    }
-
-    // Valider l'email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError("Format d'email invalide");
-      return false;
-    }
-
-    // Vérifier si l'email existe déjà
-    const emailExists = await checkEmailExists(email);
-    if (emailExists) {
-      setError("Cette adresse email est déjà utilisée");
-      return false;
-    }
-
-    // Valider le mot de passe
-    if (!validatePassword(password)) {
-      setError("Le mot de passe doit contenir au moins 8 caractères, une majuscule, un chiffre et un caractère spécial");
-      return false;
-    }
-
-    // Vérifier que les mots de passe correspondent
-    if (password !== confirmPassword) {
-      setError("Les mots de passe ne correspondent pas");
-      return false;
-    }
-
-    // Vérifier le prénom et le nom
-    if (!firstName || firstName.length < 2) {
-      setError("Veuillez entrer un prénom valide (au moins 2 caractères)");
-      return false;
-    }
-
-    if (!lastName || lastName.length < 2) {
-      setError("Veuillez entrer un nom valide (au moins 2 caractères)");
-      return false;
-    }
-
-    // Vérifier la date de naissance
-    if (!birthDate) {
-      setError("Veuillez sélectionner votre date de naissance");
-      return false;
-    }
-
-    return true;
-  };
-
-  const handleRegisterUser = async () => {
-    try {
-      // Valider le formulaire
-      const isValid = await validateForm();
-      if (!isValid) {
-        return;
-      }
-
-      setLoading(true);
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
-        setError("Impossible de récupérer l'utilisateur après vérification.");
-        setLoading(false);
-        return;
-      }
-
-      // Hacher le mot de passe avec le sel (uid)
-      const { hash: passwordHash, salt: passwordSalt } = await hashPassword(password, currentUser.uid);
-
-      const userRef = doc(db, 'users', currentUser.uid);
-      const userData = {
-        phone: currentUser.phoneNumber || formatPhone(phoneNumber),
-        email: email.toLowerCase().trim(),
-        password_hash: passwordHash,
-        password_salt: passwordSalt,
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        birth_date: birthDate,
-        role: role,
-        verified_status: verifiedStatus,
-        created_at: serverTimestamp(),
-        updated_at: serverTimestamp(),
-      };
-
-      await setDoc(userRef, userData);
-
-      // Sauvegarder les données dans SecureStore pour la persistance
-      await saveAuthData('userId', currentUser.uid);
-      await saveAuthData('userFirstName', firstName.trim());
-      await saveAuthData('userLastName', lastName.trim());
-      await saveAuthData('userBirthDate', birthDate);
-      await saveAuthData('userEmail', email.toLowerCase().trim());
-      await saveAuthData('userRole', role);
-      await saveAuthData('lastLogin', new Date().toISOString());
-
-      setShowSuccessModal(true);
-    } catch (err: any) {
-      console.error("Erreur lors de l'enregistrement:", err);
-      setError("Erreur lors de l'enregistrement : " + (err.message || 'Veuillez réessayer'));
-      setLoading(false);
-    }
-  };
+    // Méthodes
+    handleSendVerificationCode,
+    handleVerifyCode,
+    handleRegisterUser,
+    reset,
+    handleSupportRequest,
+    setDatePickerVisibility,
+    handleCloseSuccessModal
+  } = useRegistration(router);
 
   // Gestion des entrées avec moins de scroll auto
   const handleInputFocus = (position: number) => {
@@ -323,11 +65,6 @@ export default function RegisterScreen() {
         });
       }, 200);
     }
-  };
-
-  const handleCloseSuccessModal = () => {
-    setShowSuccessModal(false);
-    router.replace('/(tabs)/Index');
   };
 
   return (
@@ -395,16 +132,7 @@ export default function RegisterScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.linkButton}
-                  onPress={async () => {
-                    if (loading) return;
-                    setLoading(true);
-                    await fadeOut();
-                    setIsCodeSent(false);
-                    setVerificationCode('');
-                    setError(null);
-                    fadeIn();
-                    setLoading(false);
-                  }}
+                  onPress={reset}
                   disabled={loading}
                 >
                   <Text style={styles.linkText}>Modifier le numéro</Text>
@@ -574,7 +302,6 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  // Styles inchangés
   container: {
     flex: 1,
     backgroundColor: '#000',

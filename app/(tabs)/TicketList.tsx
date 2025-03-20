@@ -1,80 +1,24 @@
-import { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { View, FlatList, StyleSheet, ActivityIndicator, RefreshControl, ScrollView, Text, Modal } from 'react-native';
 import TicketCard from '@/components/ticket/TicketCard';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '@/firebase/config';
-import { getAuth } from 'firebase/auth';
-import { UserTicket } from '@/types/tickets';
 import { useLocalSearchParams } from 'expo-router';
 import TicketDetail from '@/components/ticket/TicketDetail';
+import { useTickets } from '@/hooks/useTickets';
 
 export default function TicketsListScreen() {
-  const [tickets, setTickets] = useState<UserTicket[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedTicket, setSelectedTicket] = useState<UserTicket | null>(null);
-  const [showTicketModal, setShowTicketModal] = useState(false);
-
   const { refresh } = useLocalSearchParams();
 
-  const fetchTickets = useCallback(async () => {
-    try {
-      const auth = getAuth();
-      const user = auth.currentUser;
-
-      if (!user) {
-        setError("Utilisateur non connecté");
-        return;
-      }
-
-      const ticketsRef = collection(db, 'user_tickets');
-      const q = query(ticketsRef, where('user_id', '==', user.uid));
-      const querySnapshot = await getDocs(q);
-
-      const userTickets: UserTicket[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        userTickets.push({
-          ...data,
-          id: doc.id,
-          purchase_date: data.purchase_date?.toDate() || new Date(),
-          created_at: data.created_at?.toDate() || new Date(),
-        } as UserTicket);
-      });
-
-      setTickets(userTickets);
-      setError(null);
-    } catch (err: any) {
-      setError(`Erreur: ${err.code} - ${err.message}`);
-    }
-  }, []);
-
-  const handleRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await fetchTickets();
-    setRefreshing(false);
-  }, [fetchTickets]);
-
-  const handleTicketPress = (ticket: UserTicket) => {
-    setSelectedTicket(ticket);
-    setShowTicketModal(true);
-  };
-
-  // Rafraîchir la liste quand le paramètre refresh change
-  useEffect(() => {
-    if (refresh) {
-      handleRefresh();
-    }
-  }, [refresh, handleRefresh]);
-
-  useEffect(() => {
-    const initialFetch = async () => {
-      await fetchTickets();
-      setLoading(false);
-    };
-    initialFetch();
-  }, [fetchTickets]);
+  const {
+    tickets,
+    loading,
+    refreshing,
+    error,
+    selectedTicket,
+    showTicketModal,
+    handleRefresh,
+    handleTicketPress,
+    setShowTicketModal
+  } = useTickets(refresh as string);
 
   if (loading) {
     return (
