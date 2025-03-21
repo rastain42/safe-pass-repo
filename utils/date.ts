@@ -29,3 +29,17 @@ export const isEventOngoing = (startDate: Date, endDate: Date): boolean => {
 export const isEventPast = (endDate: Date): boolean => {
   return new Date() > endDate;
 };
+
+/**
+ * Formate une date pour l'affichage avec heure
+ */
+export const formatEventDateTime = (date: Date): string => {
+  return format(date, "dd MMM yyyy - HH:mm", { locale: fr });
+};
+
+/**
+ * Formate un prix pour l'affichage
+ */
+export const formatPrice = (price: number): string => {
+  return `${price}€`;
+};

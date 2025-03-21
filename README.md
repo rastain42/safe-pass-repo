@@ -61,6 +61,16 @@ stripe.webhook="whsec_webhook"
 - Achat ticket: Implémenter la fonctionnalité de ticket nominatif
 - Organisateur: Implémenter la logique de gestion et le profil
 
+- attention aux tickets disponibles
+
+- wallet apple et google cards pour les billets
+
+- généralisation du theme
+
+- utiliser google lens ou l'ia pour la pièces d'identité
+
+- modification de l'évènement par l'auteur ( soft delete, edit)
+
 ## 🟠 Fonctionnalités importantes
 
 - Support: Implémenter le système de support (formulaire, envoi email)

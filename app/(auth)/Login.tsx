@@ -1,13 +1,12 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { Link, useRouter } from 'expo-router';
+import { Link } from 'expo-router';
 import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
 import { firebaseConfig } from '@/firebase/config';
 import { useAuth } from '@/hooks/useAuth';
+import { navigateToSupport, navigateToRegister } from '@/utils/navigation';
 
 export default function LoginScreen() {
-  const router = useRouter();
-
   const {
     phoneNumber,
     setPhoneNumber,
@@ -25,10 +24,6 @@ export default function LoginScreen() {
     handleLogin,
     reset
   } = useAuth();
-
-  const handleSupportRequest = () => {
-    router.push('/screens/SupportScreen');
-  };
 
   return (
     <View style={styles.container}>
@@ -129,7 +124,7 @@ export default function LoginScreen() {
 
             <TouchableOpacity
               style={styles.linkButton}
-              onPress={handleSupportRequest}
+              onPress={navigateToSupport}
               disabled={loading}
             >
               <Text style={styles.linkText}>J'ai oublié mon mot de passe</Text>
@@ -140,25 +135,28 @@ export default function LoginScreen() {
         {error && <Text style={styles.errorText}>{error}</Text>}
 
         {error && error.includes("pas enregistré") && (
-          <Link href="/Register" asChild>
-            <TouchableOpacity style={styles.linkButton}>
-              <Text style={styles.linkText}>S'inscrire maintenant</Text>
-            </TouchableOpacity>
-          </Link>
+          <TouchableOpacity
+            style={styles.linkButton}
+            onPress={navigateToRegister}
+          >
+            <Text style={styles.linkText}>S'inscrire maintenant</Text>
+          </TouchableOpacity>
         )}
 
         {!isCodeVerified && (
           <>
-            <Link href="/Register" asChild>
-              <TouchableOpacity style={styles.linkButton} disabled={loading}>
-                <Text style={[styles.linkText, loading && styles.disabledText]}>
-                  Pas de compte ? Inscrivez-vous
-                </Text>
-              </TouchableOpacity>
-            </Link>
             <TouchableOpacity
               style={styles.linkButton}
-              onPress={handleSupportRequest}
+              disabled={loading}
+              onPress={navigateToRegister}
+            >
+              <Text style={[styles.linkText, loading && styles.disabledText]}>
+                Pas de compte ? Inscrivez-vous
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.linkButton}
+              onPress={navigateToSupport}
               disabled={loading}
             >
               <Text style={[styles.linkText, loading && styles.disabledText]}>

@@ -71,7 +71,7 @@ export function useEventForm() {
       // Ajouter l'image et les tickets aux données du formulaire
       const formData = {
         ...data,
-        image: imageUri || undefined,
+        image: imageUri || "../../assets/images/safepasslogoV1.png",
         tickets: tickets,
       };
 

@@ -98,11 +98,7 @@ export const formatEventData = (id: string, data: any): Event => {
 export const fetchAllEvents = async (): Promise<Event[]> => {
   try {
     const eventsRef = collection(db, "events");
-    const eventsQuery = query(
-      eventsRef,
-      where("status", "==", "active"),
-      orderBy("start_date", "asc")
-    );
+    const eventsQuery = query(eventsRef, orderBy("start_date", "asc"));
     const querySnapshot = await getDocs(eventsQuery);
 
     return querySnapshot.docs.map((doc) => formatEventData(doc.id, doc.data()));
@@ -123,6 +119,7 @@ export const fetchEventById = async (
     const eventDoc = await getDoc(eventRef);
 
     if (!eventDoc.exists()) {
+      console.log(`Événement ${eventId} non trouvé`);
       return null;
     }
 
@@ -130,6 +127,22 @@ export const fetchEventById = async (
   } catch (error) {
     console.error(
       `Erreur lors de la récupération de l'événement ${eventId}:`,
+      error
+    );
+    throw error;
+  }
+};
+
+export const fetchEventDetails = async (eventId: string) => {
+  try {
+    const eventDoc = await getDoc(doc(db, "events", eventId));
+    if (!eventDoc.exists()) {
+      throw new Error("Événement introuvable");
+    }
+    return eventDoc.data();
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération des détails de l'événement :",
       error
     );
     throw error;

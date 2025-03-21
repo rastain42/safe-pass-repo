@@ -252,3 +252,18 @@ export const verifyCodeForRegistration = async (
     phoneNumber: user.phoneNumber,
   };
 };
+import { getAuth, sendPasswordResetEmail } from "firebase/auth";
+
+/**
+ * Envoie un email de réinitialisation de mot de passe
+ */
+export const sendPasswordReset = async (email: string): Promise<boolean> => {
+  try {
+    const auth = getAuth();
+    await sendPasswordResetEmail(auth, email);
+    return true;
+  } catch (error) {
+    console.error("Erreur lors de l'envoi du mail de réinitialisation", error);
+    return false;
+  }
+};

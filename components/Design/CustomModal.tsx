@@ -1,12 +1,20 @@
-import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import React from "react";
+import {
+    Modal,
+    View,
+    Text,
+    TouchableOpacity,
+    StyleSheet,
+    Dimensions,
+} from "react-native";
+import { getModalBackgroundColor } from "@/utils/ui.utils";
 
 interface CustomModalProps {
     visible: boolean;
     onClose: () => void;
     title: string;
     message: string;
-    type?: 'success' | 'error' | 'warning';
+    type?: "success" | "error" | "warning";
 }
 
 const CustomModal: React.FC<CustomModalProps> = ({
@@ -14,20 +22,9 @@ const CustomModal: React.FC<CustomModalProps> = ({
     onClose,
     title,
     message,
-    type = 'success'
+    type = "success",
 }) => {
-    const getBackgroundColor = () => {
-        switch (type) {
-            case 'success':
-                return '#0f0';
-            case 'error':
-                return '#ff0000';
-            case 'warning':
-                return '#ffa500';
-            default:
-                return '#0f0';
-        }
-    };
+    const backgroundColor = getModalBackgroundColor(type);
 
     return (
         <Modal
@@ -38,14 +35,14 @@ const CustomModal: React.FC<CustomModalProps> = ({
         >
             <View style={styles.centeredView}>
                 <View style={styles.modalView}>
-                    <View style={[styles.header, { backgroundColor: getBackgroundColor() }]}>
+                    <View style={[styles.header, { backgroundColor }]}>
                         <Text style={styles.titleText}>{title}</Text>
                     </View>
                     <View style={styles.content}>
                         <Text style={styles.messageText}>{message}</Text>
                     </View>
                     <TouchableOpacity
-                        style={[styles.button, { backgroundColor: getBackgroundColor() }]}
+                        style={[styles.button, { backgroundColor }]}
                         onPress={onClose}
                     >
                         <Text style={styles.buttonText}>Fermer</Text>
@@ -59,45 +56,45 @@ const CustomModal: React.FC<CustomModalProps> = ({
 const styles = StyleSheet.create({
     centeredView: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)'
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "rgba(0,0,0,0.5)",
     },
     modalView: {
-        width: Dimensions.get('window').width * 0.8,
-        backgroundColor: 'white',
+        width: Dimensions.get("window").width * 0.8,
+        backgroundColor: "white",
         borderRadius: 10,
-        overflow: 'hidden',
-        elevation: 5
+        overflow: "hidden",
+        elevation: 5,
     },
     header: {
         padding: 15,
-        alignItems: 'center'
+        alignItems: "center",
     },
     content: {
-        padding: 20
+        padding: 20,
     },
     titleText: {
-        color: '#000',
+        color: "#000",
         fontSize: 18,
-        fontWeight: 'bold'
+        fontWeight: "bold",
     },
     messageText: {
-        color: '#333',
+        color: "#333",
         fontSize: 16,
-        textAlign: 'center'
+        textAlign: "center",
     },
     button: {
         padding: 15,
-        alignItems: 'center',
+        alignItems: "center",
         borderBottomLeftRadius: 10,
-        borderBottomRightRadius: 10
+        borderBottomRightRadius: 10,
     },
     buttonText: {
-        color: '#000',
+        color: "#000",
         fontSize: 16,
-        fontWeight: 'bold'
-    }
+        fontWeight: "bold",
+    },
 });
 
 export default CustomModal;

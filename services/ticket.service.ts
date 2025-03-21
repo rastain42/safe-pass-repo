@@ -141,3 +141,102 @@ export const getTicketDetails = async (
   // ...
   return null;
 };
+import { setDoc } from "firebase/firestore";
+import { auth } from "@/firebase/config";
+
+/**
+ * Crée un ticket utilisateur après un achat
+ */
+export const createUserTicket = async (
+  eventId: string,
+  ticketPrice: number,
+  paymentIntentId?: string
+): Promise<string> => {
+  if (!auth.currentUser) {
+    throw new Error("User not authenticated");
+  }
+
+  const userTicketsRef = collection(db, "user_tickets");
+  const ticketId = doc(userTicketsRef).id;
+
+  const userTicket: UserTicket = {
+    id: ticketId,
+    user_id: auth.currentUser.uid,
+    event_id: eventId,
+    purchase_date: new Date(),
+    price: ticketPrice,
+    qr_code: JSON.stringify({
+      ticketId,
+      eventId,
+      userId: auth.currentUser.uid,
+      timestamp: Date.now(),
+    }),
+    status: TicketStatus.Valid,
+    created_at: new Date(),
+    payment_intent_id: paymentIntentId,
+  };
+
+  await setDoc(doc(userTicketsRef, ticketId), userTicket);
+  return ticketId;
+};
+
+/**
+ * Crée plusieurs tickets pour un achat
+ */
+export const createTicketsForPurchase = async (
+  eventId: string,
+  selectedTickets: { [key: string]: number },
+  eventTickets: any[],
+  paymentIntentId?: string
+): Promise<{
+  purchasedTickets: string[];
+  firstEventName: string;
+  firstTicketName: string;
+  totalPrice: number;
+}> => {
+  try {
+    if (!auth.currentUser) {
+      throw new Error("User not authenticated");
+    }
+
+    const userTicketsRef = collection(db, "user_tickets");
+    let purchasedTickets: string[] = [];
+    let firstEventName = "";
+    let firstTicketName = "";
+    let totalPrice = 0;
+
+    // Créer un ticket pour chaque billet sélectionné
+    for (const ticket of eventTickets) {
+      const quantity = selectedTickets[ticket.id] || 0;
+
+      if (quantity > 0) {
+        // Garder les infos du premier ticket pour le modal de confirmation
+        if (firstEventName === "") {
+          firstEventName = ticket.eventName || "";
+          firstTicketName = ticket.name;
+        }
+
+        totalPrice += ticket.price * quantity;
+
+        for (let i = 0; i < quantity; i++) {
+          const ticketId = await createUserTicket(
+            eventId,
+            ticket.price,
+            paymentIntentId
+          );
+          purchasedTickets.push(ticketId);
+        }
+      }
+    }
+
+    return {
+      purchasedTickets,
+      firstEventName,
+      firstTicketName,
+      totalPrice,
+    };
+  } catch (error) {
+    console.error("Error creating tickets:", error);
+    throw error;
+  }
+};

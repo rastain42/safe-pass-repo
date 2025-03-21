@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { StyleSheet } from 'react-native';
 
 type ColorScheme = 'light' | 'dark';
 
@@ -9,8 +10,8 @@ interface ColorSchemeStore {
 
 export const useColorScheme = create<ColorSchemeStore>((set) => ({
   colorScheme: 'dark',
-  toggleColorScheme: () => 
-    set((state) => ({ 
-      colorScheme: state.colorScheme === 'light' ? 'dark' : 'light' 
+  toggleColorScheme: () =>
+    set((state) => ({
+      colorScheme: state.colorScheme === 'light' ? 'dark' : 'light'
     })),
 }));
