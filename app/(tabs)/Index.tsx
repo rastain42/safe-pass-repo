@@ -1,64 +1,12 @@
-import { useEffect, useState, useCallback } from 'react';
+import React from 'react';
 import { View, StyleSheet, Image, ActivityIndicator } from 'react-native';
-import { Event } from '../../types/event';
 import EventCard from '@/components/event/EventCard';
 import RefreshableList from '@/components/design/RefreshableList';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '@/firebase/config';
-import { router } from 'expo-router';
+import { useEvents } from '@/hooks/useEvents';
+import { navigateToEventDetails } from '@/utils/navigation';
 
 export default function EventListScreen() {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const fetchEvents = useCallback(async () => {
-    try {
-      const eventsRef = collection(db, 'events');
-      const querySnapshot = await getDocs(eventsRef);
-
-      const fetchedEvents = querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          name: data.name,
-          description: data.description,
-          location: data.location,
-          start_date: data.start_date.toDate(),
-          end_date: data.end_date.toDate(),
-          capacity: data.capacity,
-          age_restriction: data.age_restriction,
-          organizerId: data.organizerId,
-          image: data.image
-        } as Event;
-      });
-
-      setEvents(fetchedEvents);
-    } catch (error) {
-      console.error("Erreur lors de la récupération des événements:", error);
-    }
-  }, []);
-
-  const handleRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await fetchEvents();
-    setRefreshing(false);
-  }, [fetchEvents]);
-
-  useEffect(() => {
-    const initialFetch = async () => {
-      await fetchEvents();
-      setLoading(false);
-    };
-    initialFetch();
-  }, [fetchEvents]);
-
-  const handleEventPress = (eventId: string) => {
-    router.push({
-      pathname: "/screens/EventDetails",
-      params: { id: eventId }
-    });
-  };
+  const { events, loading, refreshing, handleRefresh } = useEvents();
 
   const ListHeader = () => (
     <View style={styles.headerContainer}>
@@ -87,7 +35,7 @@ export default function EventListScreen() {
         renderItem={({ item }) => (
           <EventCard
             {...item}
-            onPress={() => handleEventPress(item.id)}
+            onPress={() => navigateToEventDetails(item.id)}
           />
         )}
         onRefresh={handleRefresh}

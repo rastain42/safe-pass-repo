@@ -1,41 +1,19 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { getAuth, signOut } from 'firebase/auth';
-import { useState, useEffect } from 'react';
-import { doc, getDoc, getFirestore } from 'firebase/firestore';
-import { router } from 'expo-router';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { formatMissingValue, formatFullName } from '@/utils/format';
 
 export default function ProfileScreen() {
-  const [userData, setUserData] = useState<any>(null);
-  const auth = getAuth();
-  const user = auth.currentUser;
+  const { userData, user, loading, handleLogout, handleVerifyIdentity } = useUserProfile();
 
-  const handleVerifyIdentity = () => {
-    router.push('/screens/VerifyIdentityScreen');
-  };
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (user) {
-        const db = getFirestore();
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          setUserData(userDoc.data());
-        }
-      }
-    };
-
-    fetchUserData();
-  }, [user]);
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      router.replace('/(auth)/Login');
-    } catch (error) {
-      console.error('Erreur lors de la déconnexion:', error);
-    }
-  };
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color="#0f0" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -44,28 +22,31 @@ export default function ProfileScreen() {
 
         <View style={styles.infoContainer}>
           <Text style={styles.label}>Téléphone</Text>
-          <Text style={styles.value}>{user?.phoneNumber || 'Non renseigné'}</Text>
+          <Text style={styles.value}>{formatMissingValue(user?.phoneNumber)}</Text>
         </View>
 
         <View style={styles.infoContainer}>
           <Text style={styles.label}>Email</Text>
-          <Text style={styles.value}>{userData?.email || 'Non renseigné'}</Text>
+          <Text style={styles.value}>{formatMissingValue(userData?.email)}</Text>
         </View>
 
         <View style={styles.infoContainer}>
           <Text style={styles.label}>Nom</Text>
-          <Text style={styles.value}>{`${userData?.firstName || ''} ${userData?.lastName || ''}`}</Text>
+          <Text style={styles.value}>
+            {formatFullName(userData?.firstName, userData?.lastName)}
+          </Text>
         </View>
 
         <View style={styles.infoContainer}>
           <Text style={styles.label}>Date de naissance</Text>
-          <Text style={styles.value}>{userData?.birthDate || 'Non renseigné'}</Text>
+          <Text style={styles.value}>{formatMissingValue(userData?.birthDate)}</Text>
         </View>
 
         <View style={styles.infoContainer}>
           <Text style={styles.label}>Rôle</Text>
-          <Text style={styles.value}>{userData?.role || 'Non défini'}</Text>
+          <Text style={styles.value}>{formatMissingValue(userData?.role)}</Text>
         </View>
+
         <View style={styles.verificationSection}>
           <View style={styles.verificationStatus}>
             <FontAwesome
@@ -89,6 +70,7 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           )}
         </View>
+
         <TouchableOpacity
           style={styles.logoutButton}
           onPress={handleLogout}
@@ -96,43 +78,19 @@ export default function ProfileScreen() {
           <Text style={styles.logoutText}>Se déconnecter</Text>
         </TouchableOpacity>
       </View>
-
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  verificationSection: {
-    marginTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#333',
-    paddingTop: 20,
-  },
-  verificationStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  verificationText: {
-    color: '#fff',
-    fontSize: 16,
-    marginLeft: 8,
-  },
-  verifyButton: {
-    backgroundColor: '#0f0',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  verifyButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
   container: {
     flex: 1,
     backgroundColor: '#000',
     padding: 16,
+  },
+  centered: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   profileCard: {
     backgroundColor: '#111',
@@ -159,21 +117,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
   },
-  settingsContainer: {
+  verificationSection: {
     marginTop: 20,
     borderTopWidth: 1,
     borderTopColor: '#333',
     paddingTop: 20,
   },
-  settingRow: {
+  verificationStatus: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  settingLabel: {
+  verificationText: {
     color: '#fff',
     fontSize: 16,
+    marginLeft: 8,
+  },
+  verifyButton: {
+    backgroundColor: '#0f0',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  verifyButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   logoutButton: {
     backgroundColor: '#ff4444',

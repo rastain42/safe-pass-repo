@@ -1,40 +1,18 @@
-import React, { useEffect, useState } from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs } from 'expo-router';
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/basic/useColorScheme';
-import { db } from '@/firebase/config';
-import { UserRole } from '@/types/enum';
-import { getAuth } from 'firebase/auth';
-import { getDoc, doc } from 'firebase/firestore';
+import { useUserRole } from '@/hooks/useUserRole';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const [isOrganizer, setIsOrganizer] = useState(false);
-
-
-  useEffect(() => {
-    checkUserRole();
-  }, []);
-
-  const checkUserRole = async () => {
-    const auth = getAuth();
-    const user = auth.currentUser;
-    if (!user) return;
-
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
-    if (userDoc.exists() && userDoc.data().role === UserRole.Organizer) {
-      setIsOrganizer(true);
-    }
-  };
+  const { isOrganizer } = useUserRole();
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
         headerShown: false,
       }}>
 
@@ -69,7 +47,6 @@ export default function TabLayout() {
         options={{
           title: 'Scanner',
           tabBarStyle: { display: isOrganizer ? 'flex' : 'none' },
-
           href: isOrganizer ? '/ScanScreen' : null,
           tabBarIcon: ({ color }) => (
             <FontAwesome name="qrcode" size={24} color={color} />

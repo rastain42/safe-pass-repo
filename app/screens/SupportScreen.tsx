@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
 import { FontAwesome } from '@expo/vector-icons';
 
-// Type pour gérer les différentes sections
+// Type pour gérer les différentes sections 
 type SupportSection = 'menu' | 'contact' | 'phoneChange' | 'passwordReset';
 
 export default function SupportScreen() {

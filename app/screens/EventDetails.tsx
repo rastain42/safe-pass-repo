@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import {
     View,
     Text,
@@ -11,184 +11,30 @@ import {
     ActivityIndicator
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { collection, doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db } from '@/firebase/config';
+import { useLocalSearchParams, Stack } from 'expo-router';
+import { auth } from '@/firebase/config';
 import PaymentScreen from '../../components/payment/PaymentScreen';
-import { Event } from '@/types/event';
-import { UserTicket } from '@/types/tickets';
-import { TicketStatus } from '@/types/enum';
+import { useEventDetails } from '@/hooks/useEventDetails';
+import { useTicketPurchase } from '@/hooks/useTicketPurchase';
+import { formatEventDateTime, formatPrice } from '@/utils/format';
 
 export default function EventDetailsScreen() {
     const { id } = useLocalSearchParams();
-    const router = useRouter();
-    const scrollViewRef = useRef<ScrollView>(null);
-    const [event, setEvent] = useState<Event | null>(null);
-    const [selectedTickets, setSelectedTickets] = useState<{ [key: string]: number }>({});
-    const [loading, setLoading] = useState(true);
-    const [showPayment, setShowPayment] = useState(false);
-    const [processingPayment, setProcessingPayment] = useState(false);
+    const { event, loading } = useEventDetails(id as string);
 
-    useEffect(() => {
-        const fetchEvent = async () => {
-            if (!id) {
-                setLoading(false);
-                return;
-            }
-
-            try {
-                const eventDoc = await getDoc(doc(db, 'events', id as string));
-
-                if (eventDoc.exists()) {
-                    const data = eventDoc.data();
-
-                    setEvent({
-                        ...data,
-                        id: eventDoc.id,
-                        start_date: data.start_date?.toDate() || new Date(),
-                        end_date: data.end_date?.toDate() || new Date(),
-                    } as Event);
-                } else {
-                    console.log('Event not found');
-                }
-            } catch (error) {
-                console.error('Fetch error:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchEvent();
-    }, [id]);
-
-    const updateTicketQuantity = (ticketId: string, increment: boolean) => {
-        setSelectedTickets(prev => {
-            const currentQty = prev[ticketId] || 0;
-            const newQty = increment ? currentQty + 1 : Math.max(0, currentQty - 1);
-            const updatedTickets = { ...prev, [ticketId]: newQty };
-
-            // Si on ajoute un ticket et que cela fera apparaître le bouton de paiement
-            // Alors on scrolle vers le bas
-            const hadTickets = Object.values(prev).some(qty => qty > 0);
-            const hasTickets = Object.values(updatedTickets).some(qty => qty > 0);
-
-            // Si on vient juste d'ajouter le premier ticket ou on a ajouté un ticket supplémentaire
-            if (increment && ((!hadTickets && hasTickets) || hasTickets)) {
-                // Utiliser setTimeout pour s'assurer que le rendu est fait avant de scroller
-                setTimeout(() => {
-                    scrollViewRef.current?.scrollToEnd({ animated: true });
-                }, 300);
-            }
-
-            return updatedTickets;
-        });
-    };
-
-    // Fonction pour gérer le paiement Stripe
-    const handlePurchase = () => {
-        if (!event || !auth.currentUser) {
-            Alert.alert('Erreur', 'Veuillez vous connecter pour effectuer un achat.');
-            return;
-        }
-
-        // Vérifier qu'au moins un billet est sélectionné
-        const hasTickets = Object.values(selectedTickets).some(qty => qty > 0);
-        if (!hasTickets) {
-            Alert.alert('Erreur', 'Veuillez sélectionner au moins un billet');
-            return;
-        }
-
-        // Afficher l'écran de paiement
-        setShowPayment(true);
-    };
-
-    // Fonction pour créer les tickets après le paiement réussi
-    const handlePaymentSuccess = async (paymentIntentId: string) => {
-        setProcessingPayment(true);
-        try {
-            if (!event || !auth.currentUser) return;
-
-            const userTicketsRef = collection(db, 'user_tickets');
-            let purchasedTickets = [];
-            let firstEventName = "";
-            let firstTicketName = "";
-            let totalPrice = 0;
-
-            // Créer un ticket pour chaque billet sélectionné
-            for (const ticket of event.tickets) {
-                const quantity = selectedTickets[ticket.id] || 0;
-
-                if (quantity > 0) {
-                    // Garder les infos du premier ticket pour le modal de confirmation
-                    if (firstEventName === "") {
-                        firstEventName = event.name;
-                        firstTicketName = ticket.name;
-                    }
-
-                    totalPrice += ticket.price * quantity;
-
-                    for (let i = 0; i < quantity; i++) {
-                        const ticketId = doc(userTicketsRef).id;
-
-                        const userTicket: UserTicket = {
-                            id: ticketId,
-                            user_id: auth.currentUser.uid,
-                            event_id: event.id,
-                            purchase_date: new Date(),
-                            price: ticket.price,
-                            qr_code: JSON.stringify({
-                                ticketId,
-                                eventId: event.id,
-                                userId: auth.currentUser.uid,
-                                timestamp: Date.now()
-                            }),
-                            status: TicketStatus.Valid,
-                            created_at: new Date(),
-                            payment_intent_id: paymentIntentId
-                        };
-
-                        await setDoc(doc(userTicketsRef, userTicket.id), userTicket);
-                        purchasedTickets.push(ticketId);
-                    }
-                }
-            }
-
-            // Réinitialiser les sélections après l'achat
-            setSelectedTickets({});
-            setShowPayment(false);
-            setProcessingPayment(false);
-
-            // Déterminer le message en fonction du nombre de tickets achetés
-            const ticketCount = purchasedTickets.length;
-            const additionalMessage = ticketCount > 1
-                ? `et ${ticketCount - 1} autres billets`
-                : '';
-
-            // Naviguer vers le modal de confirmation
-            router.push({
-                pathname: '/screens/PurchaseConfirmationScreen',
-                params: {
-                    eventName: firstEventName,
-                    ticketName: `${firstTicketName} ${additionalMessage}`,
-                    price: totalPrice.toString(),
-                    ticketCount: ticketCount.toString(),
-                }
-            });
-
-        } catch (error) {
-            console.error('Error creating tickets:', error);
-            Alert.alert('Erreur', "Le paiement a été accepté mais une erreur est survenue lors de la création des billets. Notre équipe a été notifiée.");
-        } finally {
-            setProcessingPayment(false);
-        }
-    };
-
-    // Fonction pour gérer l'annulation du paiement
-    const handlePaymentCancel = () => {
-        setShowPayment(false);
-    };
+    const {
+        selectedTickets,
+        showPayment,
+        processingPayment,
+        totalAmount,
+        ticketsData,
+        scrollViewRef,
+        updateTicketQuantity,
+        handlePurchase,
+        handlePaymentSuccess,
+        handlePaymentCancel,
+        setProcessingPayment
+    } = useTicketPurchase(event);
 
     // Pour le mode démo/debug (à supprimer en production)
     const handleLegacyPurchase = async (shouldSucceed: boolean) => {
@@ -199,66 +45,8 @@ export default function EventDetailsScreen() {
                 throw new Error("Simulation d'échec d'achat");
             }
 
-            const userTicketsRef = collection(db, 'user_tickets');
-            let purchasedTickets = [];
-            let firstEventName = "";
-            let firstTicketName = "";
-            let totalPrice = 0;
-
-            // Créer un ticket pour chaque billet sélectionné
-            for (const ticket of event.tickets) {
-                const quantity = selectedTickets[ticket.id] || 0;
-
-                if (quantity > 0) {
-                    // Garder les infos du premier ticket pour le modal de confirmation
-                    if (firstEventName === "") {
-                        firstEventName = event.name;
-                        firstTicketName = ticket.name;
-                    }
-
-                    totalPrice += ticket.price * quantity;
-
-                    for (let i = 0; i < quantity; i++) {
-                        const ticketId = doc(userTicketsRef).id;
-
-                        const userTicket: UserTicket = {
-                            id: ticketId,
-                            user_id: auth.currentUser.uid,
-                            event_id: event.id,
-                            purchase_date: new Date(),
-                            price: ticket.price,
-                            qr_code: JSON.stringify({
-                                ticketId,
-                                eventId: event.id,
-                                userId: auth.currentUser.uid,
-                                timestamp: Date.now()
-                            }),
-                            status: TicketStatus.Valid,
-                            created_at: new Date(),
-                        };
-                        await setDoc(doc(userTicketsRef, userTicket.id), userTicket);
-                        purchasedTickets.push(ticketId);
-                    }
-                }
-            }
-
-            // Déterminer le message en fonction du nombre de tickets achetés
-            const ticketCount = purchasedTickets.length;
-            const additionalMessage = ticketCount > 1
-                ? `et ${ticketCount - 1} autres billets`
-                : '';
-
-            // Naviguer vers le modal de confirmation
-            router.push({
-                pathname: '/screens/PurchaseConfirmationScreen',
-                params: {
-                    eventName: firstEventName,
-                    ticketName: `${firstTicketName} ${additionalMessage}`,
-                    price: totalPrice.toString(),
-                    ticketCount: ticketCount.toString(),
-                }
-            });
-
+            // Simuler un achat réussi avec le hook existant
+            await handlePaymentSuccess('test_payment_intent_id');
         } catch (error) {
             console.error('Purchase error:', error);
             Alert.alert('Erreur', "Une erreur est survenue lors de l'achat");
@@ -272,19 +60,6 @@ export default function EventDetailsScreen() {
             </View>
         );
     }
-
-    const totalAmount = event.tickets.reduce((sum, ticket) =>
-        sum + (selectedTickets[ticket.id] || 0) * ticket.price, 0
-    );
-
-    const ticketsData = event.tickets
-        .filter(ticket => (selectedTickets[ticket.id] || 0) > 0)
-        .map(ticket => ({
-            id: ticket.id,
-            name: ticket.name,
-            price: ticket.price,
-            quantity: selectedTickets[ticket.id] || 0
-        }));
 
     return (
         <>
@@ -313,7 +88,7 @@ export default function EventDetailsScreen() {
                     <View style={styles.infoRow}>
                         <FontAwesome name="calendar" size={16} color="#0f0" />
                         <Text style={styles.infoText}>
-                            {format(event.start_date, 'dd MMM yyyy - HH:mm', { locale: fr })}
+                            {formatEventDateTime(event.start_date)}
                         </Text>
                     </View>
 
@@ -332,7 +107,7 @@ export default function EventDetailsScreen() {
                             <View key={ticket.id} style={styles.ticketRow}>
                                 <View style={styles.ticketInfo}>
                                     <Text style={styles.ticketName}>{ticket.name}</Text>
-                                    <Text style={styles.ticketPrice}>{ticket.price}€</Text>
+                                    <Text style={styles.ticketPrice}>{formatPrice(ticket.price)}</Text>
                                     {ticket.description && (
                                         <Text style={styles.ticketDescription}>{ticket.description}</Text>
                                     )}
@@ -358,7 +133,7 @@ export default function EventDetailsScreen() {
 
                     {totalAmount > 0 && (
                         <View style={styles.totalContainer}>
-                            <Text style={styles.totalText}>Total: {totalAmount}€</Text>
+                            <Text style={styles.totalText}>Total: {formatPrice(totalAmount)}</Text>
                             <View style={styles.buttonContainer}>
                                 <TouchableOpacity
                                     style={[styles.purchaseButton, { backgroundColor: '#0f0' }]}
