@@ -8,11 +8,9 @@
       "enabled": true
     }
   },
-
   "functions": {
     "source": "functions",
     "runtime": "nodejs18",
-    "codebase": "default",
-    "gen": 2
+    "codebase": "default"
   }
 }

@@ -4,6 +4,7 @@ const stripe = require("stripe")(
   process.env.STRIPE_SECRET_KEY ||
     "sk_test_51QwQLRQWcv6PLtrYOq2YSKw3iMumohUa8ScamI9g9qXiZmlPPuCpX79sMIxyux2OVp5OIs7Nm7w8rnX6cNz5o1lX00PlVEkP29"
 );
+const analyzeDocument = require("./analyzeDocument");
 
 admin.initializeApp();
 
@@ -41,7 +42,7 @@ exports.createPaymentIntent = functions.https.onCall(async (data, context) => {
 });
 
 // Version de test pour le développement
-exports.createTestPaymentIntent = functions.https.onCall(
+exports.createTestPaymentIntentV2 = functions.https.onCall(
   async (data, context) => {
     // Simple authentication check
     if (!context.auth) {
@@ -62,3 +63,5 @@ exports.createTestPaymentIntent = functions.https.onCall(
 exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
   res.status(200).send({ received: true });
 });
+
+exports.analyzeIdentityDocument = analyzeDocument.analyzeIdentityDocument;

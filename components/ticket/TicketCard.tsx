@@ -4,14 +4,10 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { FontAwesome } from "@expo/vector-icons";
 import { useEventDetails } from "@/hooks/useEventDetails";
+import { UserTicket } from "@/types/tickets";
 
 interface TicketCardProps {
-  ticket: {
-    id: string;
-    event_id: string;
-    price: number;
-    status: "valid" | "used";
-  };
+  ticket: UserTicket;
   onPress?: () => void;
 }
 

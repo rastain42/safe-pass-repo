@@ -15,6 +15,14 @@ Cette solution vise à simplifier la relation entre :
 - Les organisateurs (collectifs, associations)
 - Les administrateurs (modération, supervision)
 
+## TODO
+
+polar sh?
+
+Google Cloud Document AI Identity Document Proofing
+
+MRZ VERIFICATION
+
 ## Présentation technique
 
 Ce projet utilise principalement Firebase (Authentication, Firestore, Functions) et React Native avec Expo comme framework.

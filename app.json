@@ -1,9 +1,7 @@
 {
   "expo": {
     "name": "safe-pass",
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "slug": "safe-pass",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -26,9 +24,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "permissions": [
-        "android.permission.CAMERA"
-      ],
+      "permissions": ["android.permission.CAMERA"],
       "package": "com.anonymous.safepass",
       "googleServicesFile": "./google-services.json"
     },
@@ -39,8 +35,6 @@
     },
     "plugins": [
       "expo-router",
-      "@react-native-firebase/app",
-      "@react-native-firebase/auth",
       [
         "expo-camera",
         {

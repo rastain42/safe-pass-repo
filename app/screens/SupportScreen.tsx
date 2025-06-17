@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
 import { FontAwesome } from '@expo/vector-icons';
@@ -341,10 +341,9 @@ const styles = StyleSheet.create({
         borderColor: '#333',
         borderWidth: 1,
         marginBottom: 16,
-    },
-    textArea: {
+    }, textArea: {
         height: 100,
-        textAlignVertical: 'top',
+        ...(Platform.OS === 'android' && { textAlignVertical: 'top' }),
     },
     button: {
         backgroundColor: '#0f0',

@@ -15,3 +15,8 @@ export const useColorScheme = create<ColorSchemeStore>((set) => ({
       colorScheme: state.colorScheme === 'light' ? 'dark' : 'light'
     })),
 }));
+
+// Export par défaut pour satisfaire Expo Router
+export default function ThemeScreen() {
+  return null;
+}

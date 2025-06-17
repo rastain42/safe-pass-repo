@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, TextInput, TouchableOpacity, ScrollView, Image } from 'react-native';
+import { StyleSheet, TextInput, TouchableOpacity, ScrollView, Image, Platform } from 'react-native';
 import { Text, View } from '@/components/basic/Themed';
 import { Controller } from 'react-hook-form';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
@@ -441,10 +441,9 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
-  },
-  textArea: {
+  }, textArea: {
     height: 100,
-    textAlignVertical: 'top',
+    ...(Platform.OS === 'android' && { textAlignVertical: 'top' }),
   },
   dateButton: {
     backgroundColor: '#222',

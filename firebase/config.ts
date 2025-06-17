@@ -1,14 +1,17 @@
 import * as SecureStore from "expo-secure-store";
 import { initializeApp, getApps } from "firebase/app";
 import {
-  getAuth,
   initializeAuth,
+  getAuth,
   onAuthStateChanged,
   User,
+  connectAuthEmulator,
+  Auth,
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getFunctions } from "firebase/functions";
 import { getStorage } from "firebase/storage";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Configuration Firebase
 export const firebaseConfig = {
@@ -29,13 +32,25 @@ if (getApps().length === 0) {
 }
 
 // Initialiser les services Firebase
-const auth = getAuth(app);
+let auth: Auth;
+try {
+  // Essayer d'initialiser l'auth (la persistance sera gérée automatiquement)
+  auth = initializeAuth(app);
+} catch (error) {
+  // Si déjà initialisé, récupérer l'instance existante
+  auth = getAuth(app);
+}
+
 const db = getFirestore(app);
 const functions = getFunctions(app);
 const storage = getStorage(app);
 
 // Définir la langue par défaut pour l'authentification
 auth.languageCode = "fr";
+
+// S'assurer qu'on utilise les fonctions en production (pas l'émulateur)
+// Si vous voulez utiliser l'émulateur, commentez cette ligne
+// connectFunctionsEmulator(functions, "localhost", 5001);
 
 // Fonctions pour gérer la persistance manuellement avec SecureStore
 export const saveAuthData = async (key: string, data: any) => {

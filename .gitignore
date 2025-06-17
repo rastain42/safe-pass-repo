@@ -3,6 +3,11 @@
 # dependencies
 node_modules/
 
+# Firebase config files (contains sensitive data)
+GoogleService-Info.plist
+google-services.json
+functions/.env
+
 # Expo
 .expo/
 dist/

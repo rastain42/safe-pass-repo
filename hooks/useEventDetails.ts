@@ -40,8 +40,8 @@ export function useEventDetails(eventId: string | null) {
   // Extraire les propriétés nécessaires pour simplifier l'utilisation
   const eventName = event?.name || "Nom de l'événement non disponible";
   const eventStartDate = event?.start_date || null;
-
   return {
+    event,
     eventName,
     eventStartDate,
     loading,

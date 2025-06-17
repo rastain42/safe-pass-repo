@@ -19,8 +19,7 @@ export default function LoginScreen() {
     error,
     loading,
     recaptchaVerifier,
-    handleSendVerificationCode,
-    handleVerifyCode,
+    handleSendVerificationCode, handleVerifyCode,
     handleLogin,
     reset
   } = useAuth();
@@ -31,7 +30,9 @@ export default function LoginScreen() {
       <FirebaseRecaptchaVerifierModal
         ref={recaptchaVerifier}
         firebaseConfig={firebaseConfig}
-        attemptInvisibleVerification
+        attemptInvisibleVerification={true}
+        title="Vérification reCAPTCHA"
+        cancelLabel="Annuler"
       />
       <View style={styles.formContainer}>
         {!isCodeSent ? (

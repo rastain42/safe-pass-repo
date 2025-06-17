@@ -17,6 +17,7 @@ import PaymentScreen from '../../components/payment/PaymentScreen';
 import { useEventDetails } from '@/hooks/useEventDetails';
 import { useTicketPurchase } from '@/hooks/useTicketPurchase';
 import { formatEventDateTime, formatPrice } from '@/utils/format';
+import { EventTicket } from '@/types/tickets';
 
 export default function EventDetailsScreen() {
     const { id } = useLocalSearchParams();
@@ -99,11 +100,9 @@ export default function EventDetailsScreen() {
 
                     <View style={styles.descriptionContainer}>
                         <Text style={styles.description}>{event.description}</Text>
-                    </View>
-
-                    <View style={styles.ticketsContainer}>
+                    </View>                    <View style={styles.ticketsContainer}>
                         <Text style={styles.sectionTitle}>Billets disponibles</Text>
-                        {event.tickets.map(ticket => (
+                        {event.tickets.map((ticket: EventTicket) => (
                             <View key={ticket.id} style={styles.ticketRow}>
                                 <View style={styles.ticketInfo}>
                                     <Text style={styles.ticketName}>{ticket.name}</Text>
