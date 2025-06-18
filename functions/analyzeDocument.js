@@ -317,7 +317,25 @@ const analyzeIdentityDocument = onCall(async (request) => {
     console.error("Erreur Document AI:", error);
     console.error("Error code:", error.code);
     console.error("Error message:", error.message);
-    console.error("Error details:", error.details); // Handle specific errors
+    console.error("Error details:", error.details);
+
+    // Afficher les détails de l'erreur BadRequest
+    if (error.statusDetails && error.statusDetails.length > 0) {
+      console.error(
+        "Status details:",
+        JSON.stringify(error.statusDetails, null, 2)
+      );
+      error.statusDetails.forEach((detail, index) => {
+        console.error(`Status detail ${index}:`, detail);
+        if (detail.fieldViolations) {
+          detail.fieldViolations.forEach((violation, vIndex) => {
+            console.error(`Field violation ${vIndex}:`, violation);
+          });
+        }
+      });
+    }
+
+    // Handle specific errors
     if (error.code === 3 || error.message.includes("INVALID_ARGUMENT")) {
       console.error("INVALID_ARGUMENT error - possible causes:");
       console.error(
