@@ -5,6 +5,8 @@ const stripe = require("stripe")(
     "sk_test_51QwQLRQWcv6PLtrYOq2YSKw3iMumohUa8ScamI9g9qXiZmlPPuCpX79sMIxyux2OVp5OIs7Nm7w8rnX6cNz5o1lX00PlVEkP29"
 );
 const analyzeDocument = require("./analyzeDocument");
+const { compareFaces, evaluateSelfieQuality } = require("./compareFaces");
+const { cleanupTempFiles } = require("./cleanupTempFiles");
 
 admin.initializeApp();
 
@@ -65,3 +67,6 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
 });
 
 exports.analyzeIdentityDocument = analyzeDocument.analyzeIdentityDocument;
+exports.compareFaces = compareFaces;
+exports.evaluateSelfieQuality = evaluateSelfieQuality;
+exports.cleanupTempFiles = cleanupTempFiles;

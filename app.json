@@ -1,7 +1,9 @@
 {
   "expo": {
     "name": "safe-pass",
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "slug": "safe-pass",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -24,7 +26,9 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "permissions": ["android.permission.CAMERA"],
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
       "package": "com.anonymous.safepass",
       "googleServicesFile": "./google-services.json"
     },
@@ -41,7 +45,8 @@
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true

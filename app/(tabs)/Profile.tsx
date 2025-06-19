@@ -28,46 +28,90 @@ export default function ProfileScreen() {
         <View style={styles.infoContainer}>
           <Text style={styles.label}>Email</Text>
           <Text style={styles.value}>{formatMissingValue(userData?.email)}</Text>
-        </View>
-
-        <View style={styles.infoContainer}>
+        </View>        <View style={styles.infoContainer}>
           <Text style={styles.label}>Nom</Text>
           <Text style={styles.value}>
-            {formatFullName(userData?.firstName, userData?.lastName)}
+            {userData?.profile?.firstName && userData?.profile?.lastName
+              ? `${userData.profile.firstName} ${userData.profile.lastName}`
+              : formatFullName(userData?.firstName, userData?.lastName)}
           </Text>
+          {userData?.profile?.verified && (
+            <Text style={styles.verifiedBadge}>✅ Vérifié automatiquement</Text>
+          )}
         </View>
 
         <View style={styles.infoContainer}>
           <Text style={styles.label}>Date de naissance</Text>
-          <Text style={styles.value}>{formatMissingValue(userData?.birthDate)}</Text>
+          <Text style={styles.value}>
+            {userData?.profile?.birthDate || formatMissingValue(userData?.birthDate)}
+          </Text>
+          {userData?.profile?.birthDate && (
+            <Text style={styles.extractedInfo}>📄 Extraite du document</Text>
+          )}
         </View>
+
+        {userData?.profile?.documentNumber && (
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>N° Document</Text>
+            <Text style={styles.value}>{userData.profile.documentNumber}</Text>
+            <Text style={styles.extractedInfo}>📄 Extraite du document</Text>
+          </View>
+        )}
+
+        {userData?.profile?.verification_method && (
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Méthode de vérification</Text>
+            <Text style={styles.value}>
+              {userData.profile.verification_method === 'automatic'
+                ? '🤖 Vérification automatique'
+                : '👨‍💼 Vérification manuelle'
+              }
+            </Text>
+            {userData?.profile?.verification_date && (
+              <Text style={styles.extractedInfo}>
+                📅 {new Date(userData.profile.verification_date.seconds * 1000).toLocaleDateString('fr-FR')}
+              </Text>
+            )}
+          </View>
+        )}
 
         <View style={styles.infoContainer}>
           <Text style={styles.label}>Rôle</Text>
           <Text style={styles.value}>{formatMissingValue(userData?.role)}</Text>
-        </View>
-
-        <View style={styles.verificationSection}>
+        </View>        <View style={styles.verificationSection}>
           <View style={styles.verificationStatus}>
             <FontAwesome
-              name={userData?.isVerified ? "check-circle" : "exclamation-circle"}
+              name={userData?.verification_status === 'auto_approved' || userData?.profile?.verified ? "check-circle" : "exclamation-circle"}
               size={24}
-              color={userData?.isVerified ? "#0f0" : "#ff9800"}
+              color={userData?.verification_status === 'auto_approved' || userData?.profile?.verified ? "#0f0" : "#ff9800"}
             />
             <Text style={styles.verificationText}>
-              {userData?.isVerified
-                ? "Identité vérifiée"
-                : "Identité non vérifiée"}
+              {userData?.verification_status === 'auto_approved'
+                ? "Identité vérifiée automatiquement"
+                : userData?.profile?.verified
+                  ? "Identité vérifiée"
+                  : userData?.verification_status === 'pending'
+                    ? "Vérification en cours"
+                    : "Identité non vérifiée"}
             </Text>
           </View>
 
-          {!userData?.isVerified && (
+          {(!userData?.verification_status || userData?.verification_status === 'rejected') && (
             <TouchableOpacity
               style={styles.verifyButton}
               onPress={handleVerifyIdentity}
             >
               <Text style={styles.verifyButtonText}>Vérifier mon identité</Text>
             </TouchableOpacity>
+          )}
+
+          {userData?.verification_status === 'pending' && (
+            <View style={styles.pendingInfo}>
+              <Text style={styles.pendingText}>
+                📋 Votre demande est en cours d'examen par nos équipes.
+                Vous recevrez une notification sous 24-48h.
+              </Text>
+            </View>
           )}
         </View>
 
@@ -111,11 +155,32 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: 14,
     marginBottom: 4,
-  },
-  value: {
+  }, value: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '500',
+  },
+  verifiedBadge: {
+    color: '#0f0',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginTop: 2,
+  }, extractedInfo: {
+    color: '#888',
+    fontSize: 12,
+    fontStyle: 'italic',
+    marginTop: 2,
+  },
+  pendingInfo: {
+    backgroundColor: '#333',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  pendingText: {
+    color: '#ff9800',
+    fontSize: 14,
+    textAlign: 'center',
   },
   verificationSection: {
     marginTop: 20,

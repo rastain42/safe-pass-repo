@@ -42,7 +42,7 @@ export const navigateToLoginHelp = () => {
  */
 export const navigateToTicketList = () => {
   router.navigate({
-    pathname: "/(tabs)/TicketList",
+    pathname: "/(tabs)/ticketlist",
     params: { refresh: Date.now().toString() }, // Timestamp pour forcer le refresh
   });
 };

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Link } from 'expo-router';
-import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
+import { SafeFirebaseRecaptcha } from '@/components/auth/SafeFirebaseRecaptcha';
 import { firebaseConfig } from '@/firebase/config';
 import { useAuth } from '@/hooks/useAuth';
 import { navigateToSupport, navigateToRegister } from '@/utils/navigation';
@@ -23,11 +23,10 @@ export default function LoginScreen() {
     handleLogin,
     reset
   } = useAuth();
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Connexion</Text>
-      <FirebaseRecaptchaVerifierModal
+      <SafeFirebaseRecaptcha
         ref={recaptchaVerifier}
         firebaseConfig={firebaseConfig}
         attemptInvisibleVerification={true}

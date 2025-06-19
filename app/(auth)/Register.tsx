@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Animated } from 'react-native';
 import { Link, useRouter } from 'expo-router';
-import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
+import { SafeFirebaseRecaptcha } from '@/components/auth/SafeFirebaseRecaptcha';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format } from 'date-fns';
@@ -66,11 +66,10 @@ export default function RegisterScreen() {
       }, 200);
     }
   };
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Inscription</Text>
-      <FirebaseRecaptchaVerifierModal
+      <SafeFirebaseRecaptcha
         ref={recaptchaVerifier}
         firebaseConfig={firebaseConfig}
         attemptInvisibleVerification={true}

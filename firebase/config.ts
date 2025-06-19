@@ -1,17 +1,11 @@
 import * as SecureStore from "expo-secure-store";
 import { initializeApp, getApps } from "firebase/app";
-import {
-  initializeAuth,
-  getAuth,
-  onAuthStateChanged,
-  User,
-  connectAuthEmulator,
-  Auth,
-} from "firebase/auth";
+import { initializeAuth, getAuth, Auth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getFunctions } from "firebase/functions";
 import { getStorage } from "firebase/storage";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
 
 // Configuration Firebase
 export const firebaseConfig = {
@@ -31,16 +25,19 @@ if (getApps().length === 0) {
   app = getApps()[0];
 }
 
-// Initialiser les services Firebase
+// Initialiser l'authentification avec persistance
 let auth: Auth;
 try {
-  // Essayer d'initialiser l'auth (la persistance sera gérée automatiquement)
+  // Pour React Native avec Firebase v11, la persistance AsyncStorage est automatique
+  // Il suffit d'utiliser initializeAuth sans paramètres de persistance spécifiques
   auth = initializeAuth(app);
 } catch (error) {
-  // Si déjà initialisé, récupérer l'instance existante
+  // Si l'auth est déjà initialisée, utiliser l'instance existante
+  console.warn("Firebase Auth already initialized:", error);
   auth = getAuth(app);
 }
 
+// Initialiser les autres services Firebase
 const db = getFirestore(app);
 const functions = getFunctions(app);
 const storage = getStorage(app);

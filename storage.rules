@@ -1,0 +1,38 @@
+rules_version = '2';
+
+// Firebase Storage Security Rules for SafePass
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Allow authenticated users to read and write their own temporary files
+    match /temp/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Allow authenticated users to read and write their own verification files
+    match /verifications/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Allow authenticated users to read and write their own profile pictures
+    match /profile-pictures/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Allow public read access to event images
+    match /events/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // Allow authenticated users to upload ticket QR codes
+    match /tickets/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Default: deny all other access
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

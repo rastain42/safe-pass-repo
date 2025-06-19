@@ -254,44 +254,54 @@ export function compareMRZWithOCR(
 } {
   const discrepancies: string[] = [];
 
+  // Vérifications de sécurité
+  if (!mrzData || !ocrData) {
+    return {
+      matches: false,
+      discrepancies: ["Données MRZ ou OCR manquantes"],
+      confidence: 0,
+    };
+  }
+
   // Comparer les noms (normaliser les accents et espaces)
-  const normalizeName = (name: string) =>
-    name
+  const normalizeName = (name: string | undefined) => {
+    if (!name) return "";
+    return name
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/\s+/g, "")
       .toUpperCase();
-
+  };
   if (
     ocrData.firstName &&
-    normalizeName(mrzData.firstName) !== normalizeName(ocrData.firstName.value)
+    normalizeName(mrzData.firstName) !== normalizeName(ocrData.firstName)
   ) {
     discrepancies.push(
-      `Prénom: MRZ="${mrzData.firstName}" vs OCR="${ocrData.firstName.value}"`
+      `Prénom: MRZ="${mrzData.firstName}" vs OCR="${ocrData.firstName}"`
     );
   }
 
   if (
     ocrData.lastName &&
-    normalizeName(mrzData.lastName) !== normalizeName(ocrData.lastName.value)
+    normalizeName(mrzData.lastName) !== normalizeName(ocrData.lastName)
   ) {
     discrepancies.push(
-      `Nom: MRZ="${mrzData.lastName}" vs OCR="${ocrData.lastName.value}"`
+      `Nom: MRZ="${mrzData.lastName}" vs OCR="${ocrData.lastName}"`
     );
   }
 
-  if (ocrData.birthDate && mrzData.birthDate !== ocrData.birthDate.value) {
+  if (ocrData.birthDate && mrzData.birthDate !== ocrData.birthDate) {
     discrepancies.push(
-      `Date naissance: MRZ="${mrzData.birthDate}" vs OCR="${ocrData.birthDate.value}"`
+      `Date naissance: MRZ="${mrzData.birthDate}" vs OCR="${ocrData.birthDate}"`
     );
   }
 
   if (
     ocrData.documentNumber &&
-    mrzData.documentNumber !== ocrData.documentNumber.value
+    mrzData.documentNumber !== ocrData.documentNumber
   ) {
     discrepancies.push(
-      `Numéro: MRZ="${mrzData.documentNumber}" vs OCR="${ocrData.documentNumber.value}"`
+      `Numéro: MRZ="${mrzData.documentNumber}" vs OCR="${ocrData.documentNumber}"`
     );
   }
 

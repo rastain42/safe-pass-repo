@@ -96,12 +96,10 @@ interface RootLayoutNavProps {
 function RootLayoutNav({ user }: RootLayoutNavProps) {
   const { colorScheme } = useColorScheme();
 
-
   return (
     <>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack
-
           screenOptions={{
             headerStyle: {
               backgroundColor: colorScheme === 'dark' ? '#000' : '#fff',
@@ -113,6 +111,10 @@ function RootLayoutNav({ user }: RootLayoutNavProps) {
           }}
         >
           <Stack.Screen
+            name="index"
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
             name="(auth)"
             options={{ headerShown: false }}
           />
@@ -120,6 +122,7 @@ function RootLayoutNav({ user }: RootLayoutNavProps) {
             name="(tabs)"
             options={{ headerShown: false }}
           />
+
         </Stack>
       </ThemeProvider>
     </>
