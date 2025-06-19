@@ -12,6 +12,7 @@ export interface Event {
   end_date: Date;
   capacity: number;
   age_restriction: AgeRestriction;
+  allowUnverifiedUsers?: boolean;
   image?: string;
   tickets: EventTicket[];
 }

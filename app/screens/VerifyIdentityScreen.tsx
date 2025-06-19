@@ -22,8 +22,7 @@ export default function VerifyIdentityScreen() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [biometricResult, setBiometricResult] = useState<BiometricComparisonResult | null>(null);
   const [comparingFaces, setComparingFaces] = useState(false);
-
-  const pickImage = async (setter: (value: string | null) => void) => {
+  const pickImage = async (setter: (value: string | null) => void, isSelfie: boolean = false) => {
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
 
@@ -35,7 +34,7 @@ export default function VerifyIdentityScreen() {
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        aspect: [4, 3],
+        aspect: isSelfie ? [3, 4] : [4, 3], // Portrait pour selfie, paysage pour document
         quality: 0.8,
       });
 
@@ -630,11 +629,9 @@ export default function VerifyIdentityScreen() {
                 </Text>
                 <Text style={styles.hint}>
                   Cette photo permettra de vérifier la correspondance avec votre pièce d'identité (optionnel)
-                </Text>
-
-                <TouchableOpacity
+                </Text>                <TouchableOpacity
                   style={styles.imageButton}
-                  onPress={() => pickImage(setSelfie)}
+                  onPress={() => pickImage(setSelfie, true)}
                 >
                   {selfie ? (
                     <Image source={{ uri: selfie }} style={styles.preview} />

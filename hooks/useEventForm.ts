@@ -44,11 +44,13 @@ export function useEventForm() {
       end_date: new Date(),
       capacity: 0,
       age_restriction: AgeRestriction.None,
+      allowUnverifiedUsers: false,
       tickets: [],
     },
   });
 
   const start_date = watch("start_date");
+  const allowUnverifiedUsers = watch("allowUnverifiedUsers");
 
   const openImagePicker = async () => {
     const uri = await pickAndProcessImage();
@@ -66,11 +68,13 @@ export function useEventForm() {
       if (!user) {
         setSubmissionError("Utilisateur non connecté");
         return;
-      }
-
-      // Ajouter l'image et les tickets aux données du formulaire
+      } // Ajouter l'image et les tickets aux données du formulaire
       const formData = {
         ...data,
+        // Si l'événement est accessible aux non-vérifiés, forcer "Tout public"
+        age_restriction: data.allowUnverifiedUsers
+          ? AgeRestriction.None
+          : data.age_restriction,
         image: imageUri || "../../assets/images/safepasslogoV1.png",
         tickets: tickets,
       };
@@ -105,14 +109,13 @@ export function useEventForm() {
 
     // Image state
     imageUri,
-    openImagePicker,
-
-    // Date pickers
+    openImagePicker, // Date pickers
     showStartPicker,
     setShowStartPicker,
     showEndPicker,
     setShowEndPicker,
     start_date,
+    allowUnverifiedUsers,
 
     // Submission state
     showSuccessModal,

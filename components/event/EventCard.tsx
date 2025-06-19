@@ -14,6 +14,7 @@ interface EventCardProps {
   end_date: Date;
   capacity: number;
   age_restriction: AgeRestriction;
+  allowUnverifiedUsers?: boolean;
   image?: string | number;
   onPress?: () => void;
 }
@@ -26,11 +27,12 @@ const EventCard: React.FC<EventCardProps> = ({
   end_date,
   capacity,
   age_restriction,
+  allowUnverifiedUsers = false,
   image,
-  onPress
+  onPress,
 }) => {
   return (
-    < TouchableOpacity style={styles.card} onPress={onPress}>
+    <TouchableOpacity style={styles.card} onPress={onPress}>
       <Image
         source={typeof image === 'string'
           ? { uri: image }
@@ -62,18 +64,24 @@ const EventCard: React.FC<EventCardProps> = ({
           <Text style={styles.description} numberOfLines={2}>
             {description}
           </Text>
-        </View>
-
-        <View style={styles.footer}>
-          <View style={styles.ageRestriction}>
-            <FontAwesome
-              name={age_restriction === AgeRestriction.None ? 'universal-access' : 'warning'}
-              size={16}
-              color="#0f0"
-            />
-            <Text style={styles.ageText}>
-              {age_restriction === AgeRestriction.None ? 'Tout public' : 'Réservé +18'}
-            </Text>
+        </View>        <View style={styles.footer}>
+          <View style={styles.restrictions}>
+            <View style={styles.ageRestriction}>
+              <FontAwesome
+                name={age_restriction === AgeRestriction.None ? 'universal-access' : 'warning'}
+                size={16}
+                color="#0f0"
+              />
+              <Text style={styles.ageText}>
+                {age_restriction === AgeRestriction.None ? 'Tout public' : 'Réservé +18'}
+              </Text>
+            </View>
+            {allowUnverifiedUsers && (
+              <View style={styles.verificationStatus}>
+                <FontAwesome name="user-plus" size={14} color="#ff9800" />
+                <Text style={styles.verificationText}>Ouvert aux non-vérifiés</Text>
+              </View>
+            )}
           </View>
           <TouchableOpacity style={styles.button}>
             <Text style={styles.buttonText}>Voir plus</Text>
@@ -129,12 +137,15 @@ const styles = StyleSheet.create({
     color: '#aaa',
     fontSize: 14,
     lineHeight: 20,
-  },
-  footer: {
+  }, footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 8,
+  },
+  restrictions: {
+    flexDirection: 'column',
+    gap: 4,
   },
   ageRestriction: {
     flexDirection: 'row',
@@ -143,6 +154,15 @@ const styles = StyleSheet.create({
   ageText: {
     color: '#0f0',
     fontSize: 12,
+    marginLeft: 4,
+  },
+  verificationStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  verificationText: {
+    color: '#ff9800',
+    fontSize: 11,
     marginLeft: 4,
   },
   button: {

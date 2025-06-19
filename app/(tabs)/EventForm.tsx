@@ -1,10 +1,9 @@
 import React from 'react';
-import { StyleSheet, TextInput, TouchableOpacity, ScrollView, Image, Platform } from 'react-native';
+import { StyleSheet, TextInput, TouchableOpacity, ScrollView, Image, Platform, Switch } from 'react-native';
 import { Text, View } from '@/components/basic/Themed';
 import { Controller } from 'react-hook-form';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { format } from 'date-fns';
-import { Picker } from '@react-native-picker/picker';
 import { AgeRestriction } from '@/types/enum';
 import CustomModal from '@/components/design/CustomModal';
 import { useEventForm } from '@/hooks/useEventForm';
@@ -19,14 +18,13 @@ export default function EventFormScreen() {
 
     // Image state
     imageUri,
-    openImagePicker,
-
-    // Date pickers
+    openImagePicker,    // Date pickers
     showStartPicker,
     setShowStartPicker,
     showEndPicker,
     setShowEndPicker,
     start_date,
+    allowUnverifiedUsers,
 
     // Submission state
     showSuccessModal,
@@ -145,38 +143,46 @@ export default function EventFormScreen() {
             />
           )}
           name="capacity"
-        />
-        {errors.capacity && <Text style={styles.errorText}>{errors.capacity.message}</Text>}
+        />        {errors.capacity && <Text style={styles.errorText}>{errors.capacity.message}</Text>}
 
-        <Text style={styles.label}>Restriction d'âge</Text>
-        <Controller
-          control={control}
-          rules={{
-            required: "La restriction d'âge est requise",
-          }}
-          render={({ field: { onChange, value } }) => (
-            <View style={styles.pickerContainer}>
-              <Picker
-                style={styles.picker}
-                selectedValue={value}
+        <View style={styles.switchContainer}>
+          <Text style={styles.label}>Accessible aux personnes non-vérifiées</Text>
+          <Controller
+            control={control}
+            render={({ field: { onChange, value } }) => (
+              <Switch
+                style={styles.switch}
+                value={value}
                 onValueChange={onChange}
-                dropdownIconColor="#000"
-                mode="dropdown"
-              >
-                {Object.values(AgeRestriction).map((restriction) => (
-                  <Picker.Item
-                    key={restriction}
-                    label={restriction}
-                    value={restriction}
-                    color="#000"
+                trackColor={{ false: '#767577', true: '#81b0ff' }}
+                thumbColor={value ? '#f5dd4b' : '#f4f3f4'}
+              />
+            )}
+            name="allowUnverifiedUsers"
+          />
+        </View>        {!allowUnverifiedUsers && (
+          <>
+            <View style={styles.switchContainer}>
+              <Text style={styles.label}>Restriction d'âge 18+</Text>
+              <Controller
+                control={control}
+                render={({ field: { onChange, value } }) => (
+                  <Switch
+                    style={styles.switch}
+                    value={value === AgeRestriction.Eighteen}
+                    onValueChange={(isEighteenPlus) =>
+                      onChange(isEighteenPlus ? AgeRestriction.Eighteen : AgeRestriction.None)
+                    }
+                    trackColor={{ false: '#767577', true: '#ff9800' }}
+                    thumbColor={value === AgeRestriction.Eighteen ? '#ff6b00' : '#f4f3f4'}
                   />
-                ))}
-              </Picker>
+                )}
+                name="age_restriction"
+              />
             </View>
-          )}
-          name="age_restriction"
-        />
-        {errors.age_restriction && <Text style={styles.errorText}>{errors.age_restriction.message}</Text>}
+            {errors.age_restriction && <Text style={styles.errorText}>{errors.age_restriction.message}</Text>}
+          </>
+        )}
 
         <Text style={styles.label}>Date et heure de début</Text>
         <Controller
@@ -470,17 +476,14 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#ff4444',
     marginBottom: 16,
-  },
-  pickerContainer: {
-    backgroundColor: 'transparent',
-    borderRadius: 8,
+  }, switchContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 16,
-    overflow: 'hidden',
   },
-  picker: {
-    color: '#fff',
-    backgroundColor: '#222',
-    height: 50,
+  switch: {
+    marginLeft: 10,
   },
   errorContainer: {
     backgroundColor: 'rgba(255, 0, 0, 0.1)',

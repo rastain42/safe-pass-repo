@@ -3,19 +3,20 @@ import { Alert, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { auth } from "@/firebase/config";
 import { createTicketsForPurchase } from "@/services/ticket.service";
+import { useUserProfile } from "./useUserProfile";
 
 export function useTicketPurchase(event: any | null) {
   const router = useRouter();
   const scrollViewRef = useRef<ScrollView>(null);
+  const { userData } = useUserProfile();
   const [selectedTickets, setSelectedTickets] = useState<{
     [key: string]: number;
   }>({});
   const [showPayment, setShowPayment] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
-
   // Calcule le montant total
   const totalAmount =
-    event?.tickets.reduce(
+    event?.tickets?.reduce(
       (sum: number, ticket: any) =>
         sum + (selectedTickets[ticket.id] || 0) * ticket.price,
       0
@@ -24,8 +25,8 @@ export function useTicketPurchase(event: any | null) {
   // Prépare les données de tickets pour le processus de paiement
   const ticketsData =
     event?.tickets
-      .filter((ticket: any) => (selectedTickets[ticket.id] || 0) > 0)
-      .map((ticket: any) => ({
+      ?.filter((ticket: any) => (selectedTickets[ticket.id] || 0) > 0)
+      ?.map((ticket: any) => ({
         id: ticket.id,
         name: ticket.name,
         price: ticket.price,
@@ -55,11 +56,32 @@ export function useTicketPurchase(event: any | null) {
       return updatedTickets;
     });
   };
-
   const handlePurchase = () => {
     if (!event || !auth.currentUser) {
       Alert.alert("Erreur", "Veuillez vous connecter pour effectuer un achat.");
       return;
+    } // Vérifier si l'événement exige une vérification d'identité
+    // Par défaut, si allowUnverifiedUsers n'est pas défini, on considère que la vérification est requise
+    if (event.allowUnverifiedUsers !== true) {
+      const isVerified =
+        userData?.verification_status === "auto_approved" ||
+        userData?.verification_status === "approved" ||
+        userData?.profile?.verified;
+
+      if (!isVerified) {
+        Alert.alert(
+          "Vérification requise",
+          "Cet événement nécessite une vérification d'identité. Veuillez vérifier votre identité dans votre profil avant d'acheter des billets.",
+          [
+            { text: "Annuler", style: "cancel" },
+            {
+              text: "Aller au profil",
+              onPress: () => router.push("/(tabs)/Profile"),
+            },
+          ]
+        );
+        return;
+      }
     }
 
     // Vérifier qu'au moins un billet est sélectionné
@@ -75,13 +97,12 @@ export function useTicketPurchase(event: any | null) {
 
   const handlePaymentSuccess = async (paymentIntentId: string) => {
     if (!event) return;
-
     setProcessingPayment(true);
     try {
       const result = await createTicketsForPurchase(
         event.id,
         selectedTickets,
-        event.tickets,
+        event.tickets || [],
         paymentIntentId
       );
 

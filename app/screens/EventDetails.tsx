@@ -11,17 +11,26 @@ import {
     ActivityIndicator
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import { useLocalSearchParams, Stack } from 'expo-router';
+import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { auth } from '@/firebase/config';
 import PaymentScreen from '../../components/payment/PaymentScreen';
 import { useEventDetails } from '@/hooks/useEventDetails';
 import { useTicketPurchase } from '@/hooks/useTicketPurchase';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { formatEventDateTime, formatPrice } from '@/utils/format';
 import { EventTicket } from '@/types/tickets';
 
 export default function EventDetailsScreen() {
     const { id } = useLocalSearchParams();
-    const { event, loading } = useEventDetails(id as string);
+    const router = useRouter();
+    const { event, loading } = useEventDetails(id as string); const { userData } = useUserProfile();
+
+    // Vérifier si l'utilisateur peut accéder aux billets
+    const isUserVerified = userData?.verification_status === 'auto_approved' ||
+        userData?.verification_status === 'approved' ||
+        userData?.profile?.verified;
+
+    const canAccessTickets = event?.allowUnverifiedUsers === true || isUserVerified;
 
     const {
         selectedTickets,
@@ -102,32 +111,66 @@ export default function EventDetailsScreen() {
                         <Text style={styles.description}>{event.description}</Text>
                     </View>                    <View style={styles.ticketsContainer}>
                         <Text style={styles.sectionTitle}>Billets disponibles</Text>
-                        {event.tickets.map((ticket: EventTicket) => (
-                            <View key={ticket.id} style={styles.ticketRow}>
-                                <View style={styles.ticketInfo}>
-                                    <Text style={styles.ticketName}>{ticket.name}</Text>
-                                    <Text style={styles.ticketPrice}>{formatPrice(ticket.price)}</Text>
-                                    {ticket.description && (
-                                        <Text style={styles.ticketDescription}>{ticket.description}</Text>
-                                    )}
-                                </View>
-                                <View style={styles.quantitySelector}>
-                                    <TouchableOpacity
-                                        onPress={() => updateTicketQuantity(ticket.id, false)}
-                                        style={styles.quantityButton}
-                                    >
-                                        <Text style={styles.quantityButtonText}>-</Text>
-                                    </TouchableOpacity>
-                                    <Text style={styles.quantity}>{selectedTickets[ticket.id] || 0}</Text>
-                                    <TouchableOpacity
-                                        onPress={() => updateTicketQuantity(ticket.id, true)}
-                                        style={styles.quantityButton}
-                                    >
-                                        <Text style={styles.quantityButtonText}>+</Text>
-                                    </TouchableOpacity>
-                                </View>
+
+                        {!canAccessTickets ? (
+                            <View style={styles.accessRestrictedContainer}>
+                                <FontAwesome name="lock" size={24} color="#ff9800" style={styles.lockIcon} />
+                                <Text style={styles.accessRestrictedTitle}>
+                                    Vérification d'identité requise
+                                </Text>
+                                <Text style={styles.accessRestrictedMessage}>
+                                    Cet événement nécessite une vérification d'identité pour acheter des billets.
+                                    Veuillez vérifier votre compte pour accéder aux billets.
+                                </Text>
+                                <TouchableOpacity
+                                    style={styles.verifyButton}
+                                    onPress={() => router.push('/(tabs)/Profile')}
+                                >
+                                    <Text style={styles.verifyButtonText}>Vérifier mon compte</Text>
+                                </TouchableOpacity>
                             </View>
-                        ))}
+                        ) : event.tickets && event.tickets.length > 0 ? (
+                            event.tickets.map((ticket: EventTicket) => {
+                                const isTicketSoldOut = ticket.quantity <= 0;
+                                return (
+                                    <View key={ticket.id} style={styles.ticketRow}>
+                                        <View style={styles.ticketInfo}>
+                                            <Text style={styles.ticketName}>{ticket.name}</Text>
+                                            <Text style={styles.ticketPrice}>{formatPrice(ticket.price)}</Text>
+                                            {ticket.description && (
+                                                <Text style={styles.ticketDescription}>{ticket.description}</Text>
+                                            )}
+                                            {isTicketSoldOut && (
+                                                <Text style={styles.soldOutText}>SOLD OUT</Text>
+                                            )}
+                                        </View>
+                                        {!isTicketSoldOut ? (
+                                            <View style={styles.quantitySelector}>
+                                                <TouchableOpacity
+                                                    onPress={() => updateTicketQuantity(ticket.id, false)}
+                                                    style={styles.quantityButton}
+                                                >
+                                                    <Text style={styles.quantityButtonText}>-</Text>
+                                                </TouchableOpacity>
+                                                <Text style={styles.quantity}>{selectedTickets[ticket.id] || 0}</Text>
+                                                <TouchableOpacity
+                                                    onPress={() => updateTicketQuantity(ticket.id, true)}
+                                                    style={styles.quantityButton}
+                                                >
+                                                    <Text style={styles.quantityButtonText}>+</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                        ) : (
+                                            <View style={styles.soldOutContainer}>
+                                                <Text style={styles.soldOutLabel}>Épuisé</Text>
+                                            </View>
+                                        )}
+                                    </View>
+                                );
+                            })
+                        ) : (
+                            <Text style={styles.noTicketsText}>Aucun billet disponible</Text>
+                        )}
                     </View>
 
                     {totalAmount > 0 && (
@@ -340,11 +383,71 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         width: '80%',
         maxWidth: 400,
-    },
-    processingText: {
+    }, processingText: {
         color: '#fff',
         fontSize: 16,
         marginTop: 16,
         textAlign: 'center',
-    }
+    }, noTicketsText: {
+        color: '#888',
+        fontSize: 14,
+        textAlign: 'center',
+        fontStyle: 'italic',
+        marginTop: 16,
+    },
+    soldOutText: {
+        color: '#ff4444',
+        fontSize: 12,
+        fontWeight: 'bold',
+        marginTop: 4,
+    },
+    soldOutContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+    }, soldOutLabel: {
+        color: '#ff4444',
+        fontSize: 14,
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
+    },
+    accessRestrictedContainer: {
+        backgroundColor: 'rgba(255, 152, 0, 0.1)',
+        borderWidth: 1,
+        borderColor: '#ff9800',
+        borderRadius: 12,
+        padding: 20,
+        marginTop: 16,
+        alignItems: 'center',
+    },
+    lockIcon: {
+        marginBottom: 12,
+    },
+    accessRestrictedTitle: {
+        color: '#ff9800',
+        fontSize: 18,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginBottom: 8,
+    },
+    accessRestrictedMessage: {
+        color: '#fff',
+        fontSize: 14,
+        textAlign: 'center',
+        lineHeight: 20,
+        marginBottom: 16,
+    },
+    verifyButton: {
+        backgroundColor: '#ff9800',
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+        borderRadius: 8,
+        marginTop: 8,
+    },
+    verifyButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
 });

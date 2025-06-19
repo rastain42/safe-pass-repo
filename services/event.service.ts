@@ -15,6 +15,7 @@ export interface EventFormData {
   end_date: Date;
   capacity: number;
   age_restriction: AgeRestriction;
+  allowUnverifiedUsers: boolean;
   image?: string;
   tickets: EventTicket[];
 }
@@ -87,8 +88,10 @@ export const formatEventData = (id: string, data: any): Event => {
     end_date: data.end_date?.toDate() || new Date(),
     capacity: data.capacity,
     age_restriction: data.age_restriction,
+    allowUnverifiedUsers: data.allowUnverifiedUsers || false,
     organizerId: data.organizerId,
     image: data.image || null,
+    tickets: data.tickets || [],
   } as Event;
 };
 

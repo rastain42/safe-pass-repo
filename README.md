@@ -38,8 +38,8 @@ npx expo start
 
 Connectez-vous avec un numéro de test renseigné sur Firebase :
 
-- **Numéro organisateur**: +33782185063 || **code OTP**: 222222
-- **Numéro utilisateur**: +33768509848 || **code OTP**: 123456
+- **Numéro organisateur**: +337 8218 50 63 || **code OTP**: 222222 || **mot de passe**: Mot2Passe!
+- **Numéro utilisateur**: +337 68 50 98 48 || **code OTP**: 123456 || **mot de passe**: Mot2Passe!
 
 ### Stripe - Paiement en ligne
 
