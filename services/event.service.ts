@@ -151,3 +151,28 @@ export const fetchEventDetails = async (eventId: string) => {
     throw error;
   }
 };
+
+/**
+ * Récupère tous les événements d'un organisateur
+ */
+export const getOrganizerEvents = async (
+  organizerId: string
+): Promise<Event[]> => {
+  try {
+    const eventsRef = collection(db, "events");
+    const eventsQuery = query(
+      eventsRef,
+      where("creatorId", "==", organizerId),
+      orderBy("start_date", "desc")
+    );
+    const querySnapshot = await getDocs(eventsQuery);
+
+    return querySnapshot.docs.map((doc) => formatEventData(doc.id, doc.data()));
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération des événements de l'organisateur:",
+      error
+    );
+    throw error;
+  }
+};

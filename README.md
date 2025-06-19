@@ -59,10 +59,22 @@ stripe.webhook="whsec_webhook"
    - createTestPaymentIntent : Version de test pour le développement
    - stripeWebhook : Endpoint pour les webhooks Stripe
 
+### Dashboard Organisateur
+
+Un tableau de bord dédié aux organisateurs d'événements avec :
+
+- **Statistiques générales** : Nombre total d'événements, billets vendus, participants et revenus
+- **Événements récents** : Liste des 5 derniers événements avec leurs performances
+- **Métriques de performance** : Taux de remplissage moyen, prix moyen par billet, événements à venir
+- **Interface intuitive** : Graphiques visuels, barres de progression et actualisation en temps réel
+
+**Accès** : Onglet "Dashboard" visible uniquement pour les organisateurs connectés.
+
 # SafePass - Liste des tâches
 
 ## 🔴 Tâches prioritaires (UI/UX)
 
+- ✅ **Dashboard organisateur**: Mini-tableau de bord avec statistiques de vente (nombre de billets vendus, participants, revenus, etc.)
 - Page détail ticket: Ajouter date de l'événement et heure de début
 - Page achat: Corriger CSS du bouton "Valider" et problème de défilement
 - QR code preview: Centrer le bouton "Valider"
@@ -94,6 +106,7 @@ stripe.webhook="whsec_webhook"
 - `ticket.service.ts` - Billets
 - `payment.service.ts` - Paiements
 - `identity.service.ts` - Vérification d'identité
+- ✅ `stats.service.ts` - Statistiques de vente et performances
 
 ### Hooks à compléter
 
@@ -102,6 +115,7 @@ stripe.webhook="whsec_webhook"
 - `useVerifyIdentity.ts` - Vérification d'identité
 - `useTickets.ts` - Gestion des billets
 - `useEvents.ts` - Gestion des événements
+- ✅ `useDashboardStats.ts` - Statistiques du tableau de bord organisateur
 
 ### Utilitaires (complets)
 

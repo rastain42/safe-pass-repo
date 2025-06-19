@@ -23,8 +23,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) =>
             <FontAwesome name="calendar" size={24} color={color} />,
         }}
-      />
-      <Tabs.Screen
+      />      <Tabs.Screen
         name="EventForm"
         options={{
           href: isOrganizer ? '/EventForm' : null,
@@ -35,8 +34,20 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="Dashboard"
+        options={{
+          href: isOrganizer ? '/Dashboard' : null,
+          title: 'Dashboard',
+          tabBarStyle: { display: isOrganizer ? 'flex' : 'none' },
+          tabBarIcon: ({ color }) =>
+            <FontAwesome name="bar-chart" size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="TicketList"
         options={{
+          href: isOrganizer ? null : '/TicketList',
+          tabBarStyle: { display: isOrganizer ? 'none' : 'flex' },
           title: 'Tickets',
           tabBarIcon: ({ color }) =>
             <FontAwesome name="ticket" size={24} color={color} />,
