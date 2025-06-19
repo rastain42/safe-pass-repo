@@ -72,7 +72,50 @@ Un tableau de bord dédié aux organisateurs d'événements avec :
 
 # SafePass - Liste des tâches
 
-## 🔴 Tâches prioritaires (UI/UX)
+## � CI/CD et Déploiement
+
+### Pipeline automatisé GitHub Actions
+
+Le projet utilise un pipeline CI/CD complet avec :
+
+#### 🔍 **Vérifications automatiques**
+
+- **Linting** : ESLint avec règles TypeScript et React
+- **Formatage** : Prettier pour la cohérence du code
+- **Tests** : Jest avec coverage automatique
+- **Sécurité** : Audit npm et analyse SonarCloud
+- **Type checking** : Vérification TypeScript
+
+#### 🏗️ **Build et déploiement**
+
+- **Environnements** : Development, Staging, Production
+- **EAS Build** : Build automatique pour iOS/Android
+- **Firebase** : Déploiement des Functions et règles
+- **Notifications** : Slack pour le suivi des déploiements
+
+#### 📋 **Branches et workflow**
+
+- `main` → Production (build + deploy automatique)
+- `staging` → Environnement de test
+- `develop` → Développement (builds staging)
+- `feature/*` → Pull requests avec checks automatiques
+
+### Configuration requise
+
+1. **Secrets GitHub** (voir `CICD_SETUP.md`) :
+
+   - `EXPO_TOKEN`, `FIREBASE_TOKEN`
+   - `SONAR_TOKEN`, `CODECOV_TOKEN` (optionnels)
+
+2. **Commandes disponibles** :
+   ```bash
+   npm run lint              # Vérification ESLint
+   npm run test:ci           # Tests avec coverage
+   npm run build:staging     # Build staging
+   npm run build:production  # Build production
+   ```
+
+## �🔴 Tâches prioritaires (UI/UX)
 
 - ✅ **Dashboard organisateur**: Mini-tableau de bord avec statistiques de vente (nombre de billets vendus, participants, revenus, etc.)
 - Page détail ticket: Ajouter date de l'événement et heure de début

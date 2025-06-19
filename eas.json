@@ -1,0 +1,61 @@
+{
+  "cli": {
+    "version": ">= 7.0.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "gradleCommand": ":app:assembleDebug"
+      },
+      "ios": {
+        "simulator": true,
+        "buildConfiguration": "Debug"
+      },
+      "channel": "development",
+      "env": {
+        "ENVIRONMENT": "development"
+      }
+    },
+    "staging": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "simulator": false,
+        "buildConfiguration": "Release"
+      },
+      "channel": "staging",
+      "env": {
+        "ENVIRONMENT": "staging"
+      }
+    },
+    "production": {
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "ios": {
+        "buildConfiguration": "Release"
+      },
+      "channel": "production",
+      "env": {
+        "ENVIRONMENT": "production"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "internal"
+      },
+      "ios": {
+        "appleId": "your-apple-id@example.com",
+        "ascAppId": "1234567890",
+        "appleTeamId": "ABCD123456"
+      }
+    }
+  }
+}
