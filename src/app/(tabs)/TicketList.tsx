@@ -1,5 +1,14 @@
 import React from 'react';
-import { View, FlatList, StyleSheet, ActivityIndicator, RefreshControl, ScrollView, Text, Modal } from 'react-native';
+import {
+  View,
+  FlatList,
+  StyleSheet,
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  Text,
+  Modal,
+} from 'react-native';
 import TicketCard from '@/components/ticket/TicketCard';
 import { useLocalSearchParams } from 'expo-router';
 import TicketDetail from '@/components/ticket/TicketDetail';
@@ -17,13 +26,13 @@ export default function TicketsListScreen() {
     showTicketModal,
     handleRefresh,
     handleTicketPress,
-    setShowTicketModal
+    setShowTicketModal,
   } = useTickets(refresh as string);
 
   if (loading) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color="#0f0" />
+        <ActivityIndicator size='large' color='#0f0' />
       </View>
     );
   }
@@ -45,10 +54,10 @@ export default function TicketsListScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              tintColor="#0f0"
-              colors={["#0f0"]}
-              title="Actualisation..."
-              titleColor="#fff"
+              tintColor='#0f0'
+              colors={['#0f0']}
+              title='Actualisation...'
+              titleColor='#fff'
             />
           }
         >
@@ -63,21 +72,18 @@ export default function TicketsListScreen() {
       <FlatList
         data={tickets}
         renderItem={({ item }) => (
-          <TicketCard
-            ticket={item}
-            onPress={() => handleTicketPress(item)}
-          />
+          <TicketCard ticket={item} onPress={() => handleTicketPress(item)} />
         )}
-        keyExtractor={(item) => item.id}
+        keyExtractor={item => item.id}
         contentContainerStyle={styles.listContainer}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor="#0f0"
-            colors={["#0f0"]}
-            title="Actualisation..."
-            titleColor="#fff"
+            tintColor='#0f0'
+            colors={['#0f0']}
+            title='Actualisation...'
+            titleColor='#fff'
           />
         }
       />
@@ -86,14 +92,11 @@ export default function TicketsListScreen() {
       <Modal
         visible={showTicketModal}
         transparent={true}
-        animationType="fade"
+        animationType='fade'
         onRequestClose={() => setShowTicketModal(false)}
       >
         {selectedTicket && (
-          <TicketDetail
-            ticket={selectedTicket}
-            onClose={() => setShowTicketModal(false)}
-          />
+          <TicketDetail ticket={selectedTicket} onClose={() => setShowTicketModal(false)} />
         )}
       </Modal>
     </View>
@@ -120,5 +123,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     marginBottom: 20,
-  }
+  },
 });

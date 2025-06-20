@@ -1,5 +1,13 @@
 import React from 'react';
-import { StyleSheet, TextInput, TouchableOpacity, ScrollView, Image, Platform, Switch } from 'react-native';
+import {
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Image,
+  Platform,
+  Switch,
+} from 'react-native';
 import { Text, View } from '@/components/basic/Themed';
 import { Controller } from 'react-hook-form';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
@@ -18,7 +26,7 @@ export default function EventFormScreen() {
 
     // Image state
     imageUri,
-    openImagePicker,    // Date pickers
+    openImagePicker, // Date pickers
     showStartPicker,
     setShowStartPicker,
     showEndPicker,
@@ -49,9 +57,9 @@ export default function EventFormScreen() {
       <CustomModal
         visible={showSuccessModal}
         onClose={handleCloseSuccessModal}
-        title="Événement créé !"
-        message="Votre événement a été créé avec succès et est maintenant visible pour les participants."
-        type="success"
+        title='Événement créé !'
+        message='Votre événement a été créé avec succès et est maintenant visible pour les participants.'
+        type='success'
       />
 
       <View style={styles.formContainer}>
@@ -62,8 +70,8 @@ export default function EventFormScreen() {
             required: 'Le nom est requis',
             minLength: {
               value: 3,
-              message: 'Le nom doit contenir au moins 3 caractères'
-            }
+              message: 'Le nom doit contenir au moins 3 caractères',
+            },
           }}
           render={({ field: { onChange, value } }) => (
             <TextInput
@@ -71,13 +79,12 @@ export default function EventFormScreen() {
               onChangeText={onChange}
               value={value}
               placeholder="Nom de l'événement"
-              placeholderTextColor="#888"
+              placeholderTextColor='#888'
             />
           )}
-          name="name"
+          name='name'
         />
         {errors.name && <Text style={styles.errorText}>{errors.name.message}</Text>}
-
         <Text style={styles.label}>Description</Text>
         <Controller
           control={control}
@@ -85,8 +92,8 @@ export default function EventFormScreen() {
             required: 'La description est requise',
             minLength: {
               value: 10,
-              message: 'La description doit contenir au moins 10 caractères'
-            }
+              message: 'La description doit contenir au moins 10 caractères',
+            },
           }}
           render={({ field: { onChange, value } }) => (
             <TextInput
@@ -94,15 +101,14 @@ export default function EventFormScreen() {
               onChangeText={onChange}
               value={value}
               placeholder="Description de l'événement"
-              placeholderTextColor="#888"
+              placeholderTextColor='#888'
               multiline
               numberOfLines={4}
             />
           )}
-          name="description"
+          name='description'
         />
         {errors.description && <Text style={styles.errorText}>{errors.description.message}</Text>}
-
         <Text style={styles.label}>Lieu</Text>
         <Controller
           control={control}
@@ -115,13 +121,12 @@ export default function EventFormScreen() {
               onChangeText={onChange}
               value={value}
               placeholder="Lieu de l'événement"
-              placeholderTextColor="#888"
+              placeholderTextColor='#888'
             />
           )}
-          name="location"
+          name='location'
         />
         {errors.location && <Text style={styles.errorText}>{errors.location.message}</Text>}
-
         <Text style={styles.label}>Capacité</Text>
         <Controller
           control={control}
@@ -129,22 +134,22 @@ export default function EventFormScreen() {
             required: 'La capacité est requise',
             min: {
               value: 1,
-              message: 'La capacité doit être supérieure à 0'
-            }
+              message: 'La capacité doit être supérieure à 0',
+            },
           }}
           render={({ field: { onChange, value } }) => (
             <TextInput
               style={styles.input}
-              onChangeText={(text) => onChange(parseInt(text) || 0)}
+              onChangeText={text => onChange(parseInt(text) || 0)}
               value={value.toString()}
-              placeholder="Nombre de places"
-              placeholderTextColor="#888"
-              keyboardType="numeric"
+              placeholder='Nombre de places'
+              placeholderTextColor='#888'
+              keyboardType='numeric'
             />
           )}
-          name="capacity"
-        />        {errors.capacity && <Text style={styles.errorText}>{errors.capacity.message}</Text>}
-
+          name='capacity'
+        />{' '}
+        {errors.capacity && <Text style={styles.errorText}>{errors.capacity.message}</Text>}
         <View style={styles.switchContainer}>
           <Text style={styles.label}>Accessible aux personnes non-vérifiées</Text>
           <Controller
@@ -158,9 +163,10 @@ export default function EventFormScreen() {
                 thumbColor={value ? '#f5dd4b' : '#f4f3f4'}
               />
             )}
-            name="allowUnverifiedUsers"
+            name='allowUnverifiedUsers'
           />
-        </View>        {!allowUnverifiedUsers && (
+        </View>{' '}
+        {!allowUnverifiedUsers && (
           <>
             <View style={styles.switchContainer}>
               <Text style={styles.label}>Restriction d'âge 18+</Text>
@@ -170,20 +176,21 @@ export default function EventFormScreen() {
                   <Switch
                     style={styles.switch}
                     value={value === AgeRestriction.Eighteen}
-                    onValueChange={(isEighteenPlus) =>
+                    onValueChange={isEighteenPlus =>
                       onChange(isEighteenPlus ? AgeRestriction.Eighteen : AgeRestriction.None)
                     }
                     trackColor={{ false: '#767577', true: '#ff9800' }}
                     thumbColor={value === AgeRestriction.Eighteen ? '#ff6b00' : '#f4f3f4'}
                   />
                 )}
-                name="age_restriction"
+                name='age_restriction'
               />
             </View>
-            {errors.age_restriction && <Text style={styles.errorText}>{errors.age_restriction.message}</Text>}
+            {errors.age_restriction && (
+              <Text style={styles.errorText}>{errors.age_restriction.message}</Text>
+            )}
           </>
         )}
-
         <Text style={styles.label}>Date et heure de début</Text>
         <Controller
           control={control}
@@ -195,7 +202,7 @@ export default function EventFormScreen() {
               </TouchableOpacity>
               <DateTimePickerModal
                 isVisible={showStartPicker}
-                mode="datetime"
+                mode='datetime'
                 onConfirm={(date: Date) => {
                   setShowStartPicker(false);
                   onChange(date);
@@ -205,16 +212,15 @@ export default function EventFormScreen() {
               />
             </>
           )}
-          name="start_date"
+          name='start_date'
         />
-
         <Text style={styles.label}>Date et heure de fin</Text>
         <Controller
           control={control}
           rules={{
             required: 'La date de fin est requise',
-            validate: (value) =>
-              value > start_date || 'La date de fin doit être après la date de début'
+            validate: value =>
+              value > start_date || 'La date de fin doit être après la date de début',
           }}
           render={({ field: { onChange, value } }) => (
             <>
@@ -223,7 +229,7 @@ export default function EventFormScreen() {
               </TouchableOpacity>
               <DateTimePickerModal
                 isVisible={showEndPicker}
-                mode="datetime"
+                mode='datetime'
                 minimumDate={start_date}
                 onConfirm={(date: Date) => {
                   setShowEndPicker(false);
@@ -234,14 +240,12 @@ export default function EventFormScreen() {
               />
             </>
           )}
-          name="end_date"
+          name='end_date'
         />
         {errors.end_date && <Text style={styles.errorText}>{errors.end_date.message}</Text>}
-
         <TouchableOpacity onPress={openImagePicker} style={[styles.button, { marginBottom: 12 }]}>
           <Text style={styles.buttonText}>Choisir une image</Text>
         </TouchableOpacity>
-
         {imageUri && (
           <Image
             source={{ uri: imageUri }}
@@ -249,62 +253,69 @@ export default function EventFormScreen() {
             resizeMode='contain'
           />
         )}
-
         <View style={styles.ticketsSection}>
           <Text style={styles.sectionTitle}>Tickets</Text>
 
-          {tickets.map((ticket: { id: string; name: string; price: number; quantity: number; description?: string }) => (
-            <View key={ticket.id} style={styles.ticketCard}>
-              <View style={styles.ticketInfo}>
-                <Text style={styles.ticketName}>{ticket.name}</Text>
-                <Text style={styles.ticketDetails}>
-                  Prix: {ticket.price}€ - Quantité: {ticket.quantity}
-                </Text>
-                {ticket.description && (
-                  <Text style={styles.ticketDescription}>{ticket.description}</Text>
-                )}
+          {tickets.map(
+            (ticket: {
+              id: string;
+              name: string;
+              price: number;
+              quantity: number;
+              description?: string;
+            }) => (
+              <View key={ticket.id} style={styles.ticketCard}>
+                <View style={styles.ticketInfo}>
+                  <Text style={styles.ticketName}>{ticket.name}</Text>
+                  <Text style={styles.ticketDetails}>
+                    Prix: {ticket.price}€ - Quantité: {ticket.quantity}
+                  </Text>
+                  {ticket.description && (
+                    <Text style={styles.ticketDescription}>{ticket.description}</Text>
+                  )}
+                </View>
+                <TouchableOpacity
+                  onPress={() => handleRemoveTicket(ticket.id)}
+                  style={styles.removeButton}
+                >
+                  <Text style={styles.removeButtonText}>×</Text>
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                onPress={() => handleRemoveTicket(ticket.id)}
-                style={styles.removeButton}
-              >
-                <Text style={styles.removeButtonText}>×</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
+            )
+          )}
 
           {showTicketForm ? (
             <View style={styles.ticketForm}>
               <TextInput
                 style={styles.input}
-                placeholder="Nom du ticket"
-                placeholderTextColor="#888"
+                placeholder='Nom du ticket'
+                placeholderTextColor='#888'
                 value={currentTicket.name}
-                onChangeText={(text) => updateTicketField('name', text)}
+                onChangeText={text => updateTicketField('name', text)}
               />
               <TextInput
                 style={styles.input}
-                placeholder="Prix"
-                placeholderTextColor="#888"
-                keyboardType="numeric"
+                placeholder='Prix'
+                placeholderTextColor='#888'
+                keyboardType='numeric'
                 value={currentTicket.price ? currentTicket.price.toString() : ''}
-                onChangeText={(text) => updateTicketField('price', text ? parseFloat(text) : null)}
+                onChangeText={text => updateTicketField('price', text ? parseFloat(text) : null)}
               />
               <TextInput
                 style={styles.input}
-                placeholder="Quantité disponible"
-                placeholderTextColor="#888"
-                keyboardType="numeric"
+                placeholder='Quantité disponible'
+                placeholderTextColor='#888'
+                keyboardType='numeric'
                 value={currentTicket.quantity ? currentTicket.quantity.toString() : ''}
-                onChangeText={(text) => updateTicketField('quantity', text ? parseInt(text) : null)}
+                onChangeText={text => updateTicketField('quantity', text ? parseInt(text) : null)}
               />
               <TextInput
                 style={[styles.input, styles.textArea]}
-                placeholder="Description (optionnel)"
-                placeholderTextColor="#888"
+                placeholder='Description (optionnel)'
+                placeholderTextColor='#888'
                 multiline
                 value={currentTicket.description}
-                onChangeText={(text) => updateTicketField('description', text)}
+                onChangeText={text => updateTicketField('description', text)}
               />
               <View style={styles.ticketFormButtons}>
                 <TouchableOpacity
@@ -313,10 +324,7 @@ export default function EventFormScreen() {
                 >
                   <Text style={styles.buttonText}>Annuler</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.button, { flex: 1 }]}
-                  onPress={handleAddTicket}
-                >
+                <TouchableOpacity style={[styles.button, { flex: 1 }]} onPress={handleAddTicket}>
                   <Text style={styles.buttonText}>Ajouter</Text>
                 </TouchableOpacity>
               </View>
@@ -330,23 +338,21 @@ export default function EventFormScreen() {
             </TouchableOpacity>
           )}
         </View>
-
         {submissionError && (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{submissionError}</Text>
           </View>
         )}
-
         <TouchableOpacity
           style={[
             styles.button,
-            (Object.keys(errors).length > 0 || isSubmitting) ? styles.buttonDisabled : null
+            Object.keys(errors).length > 0 || isSubmitting ? styles.buttonDisabled : null,
           ]}
           onPress={handleSubmit(onSubmit)}
           disabled={Object.keys(errors).length > 0 || isSubmitting}
         >
           <Text style={styles.buttonText}>
-            {isSubmitting ? 'Création en cours...' : 'Créer l\'événement'}
+            {isSubmitting ? 'Création en cours...' : "Créer l'événement"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -447,7 +453,8 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
-  }, textArea: {
+  },
+  textArea: {
     height: 100,
     ...(Platform.OS === 'android' && { textAlignVertical: 'top' }),
   },
@@ -476,7 +483,8 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#ff4444',
     marginBottom: 16,
-  }, switchContainer: {
+  },
+  switchContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

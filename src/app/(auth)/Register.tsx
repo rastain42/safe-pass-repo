@@ -1,5 +1,16 @@
 import React, { useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Animated } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  Animated,
+} from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { SafeFirebaseRecaptcha } from '@/components/auth/SafeFirebaseRecaptcha';
 import { Picker } from '@react-native-picker/picker';
@@ -51,7 +62,7 @@ export default function RegisterScreen() {
     reset,
     handleSupportRequest,
     setDatePickerVisibility,
-    handleCloseSuccessModal
+    handleCloseSuccessModal,
   } = useRegistration(router);
 
   // Gestion des entrées avec moins de scroll auto
@@ -61,7 +72,7 @@ export default function RegisterScreen() {
       setTimeout(() => {
         scrollViewRef.current?.scrollTo({
           y: position,
-          animated: true
+          animated: true,
         });
       }, 200);
     }
@@ -79,7 +90,7 @@ export default function RegisterScreen() {
 
       {loading && (
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#0f0" />
+          <ActivityIndicator size='large' color='#0f0' />
           <Text style={styles.loadingText}>Traitement en cours...</Text>
         </View>
       )}
@@ -92,13 +103,13 @@ export default function RegisterScreen() {
                 <Text style={styles.label}>Numéro de téléphone</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Ex: 0612345678"
-                  placeholderTextColor="#888"
+                  placeholder='Ex: 0612345678'
+                  placeholderTextColor='#888'
                   value={phoneNumber}
                   onChangeText={setPhoneNumber}
-                  keyboardType="phone-pad"
+                  keyboardType='phone-pad'
                   editable={!loading}
-                  autoComplete="tel"
+                  autoComplete='tel'
                 />
                 <TouchableOpacity
                   style={[styles.button, loading && styles.disabledButton]}
@@ -113,14 +124,14 @@ export default function RegisterScreen() {
                 <Text style={styles.label}>Code de vérification</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Entrez le code reçu par SMS"
-                  placeholderTextColor="#888"
+                  placeholder='Entrez le code reçu par SMS'
+                  placeholderTextColor='#888'
                   value={verificationCode}
                   onChangeText={setVerificationCode}
-                  keyboardType="number-pad"
+                  keyboardType='number-pad'
                   maxLength={6}
                   editable={!loading}
-                  autoComplete="sms-otp"
+                  autoComplete='sms-otp'
                 />
                 <TouchableOpacity
                   style={[styles.button, loading && styles.disabledButton]}
@@ -129,17 +140,13 @@ export default function RegisterScreen() {
                 >
                   <Text style={styles.buttonText}>Vérifier le code</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.linkButton}
-                  onPress={reset}
-                  disabled={loading}
-                >
+                <TouchableOpacity style={styles.linkButton} onPress={reset} disabled={loading}>
                   <Text style={styles.linkText}>Modifier le numéro</Text>
                 </TouchableOpacity>
               </>
             )}
             {error && <Text style={styles.errorText}>{error}</Text>}
-            <Link href="/(auth)/Login" asChild>
+            <Link href='/(auth)/Login' asChild>
               <TouchableOpacity style={styles.linkButton} disabled={loading}>
                 <Text style={[styles.linkText, loading && styles.disabledText]}>
                   Déjà un compte ? Connectez-vous
@@ -167,76 +174,76 @@ export default function RegisterScreen() {
               style={{ width: '100%' }}
               contentContainerStyle={{ alignItems: 'center', paddingBottom: 40 }}
               scrollEventThrottle={16}
-              keyboardShouldPersistTaps="handled"
+              keyboardShouldPersistTaps='handled'
             >
               <View style={styles.formContainer}>
                 <Text style={styles.label}>Adresse e-mail</Text>
                 <TextInput
                   style={[styles.input, { color: '#fff' }]}
-                  placeholder="Ex: monemail@exemple.com"
-                  placeholderTextColor="#888"
+                  placeholder='Ex: monemail@exemple.com'
+                  placeholderTextColor='#888'
                   value={email}
                   onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
+                  keyboardType='email-address'
+                  autoCapitalize='none'
                   onFocus={() => handleInputFocus(0)}
                   editable={!loading}
-                  autoComplete="email"
+                  autoComplete='email'
                 />
 
                 <Text style={styles.label}>Mot de passe</Text>
                 <TextInput
                   style={[styles.input, { color: '#fff' }]}
-                  placeholder="Mot de passe"
-                  placeholderTextColor="#888"
+                  placeholder='Mot de passe'
+                  placeholderTextColor='#888'
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
                   onFocus={() => handleInputFocus(60)}
                   editable={!loading}
-                  autoComplete="password-new"
+                  autoComplete='password-new'
                 />
 
                 <Text style={styles.label}>Confirmer le mot de passe</Text>
                 <TextInput
                   style={[styles.input, { color: '#fff' }]}
-                  placeholder="Confirmez votre mot de passe"
-                  placeholderTextColor="#888"
+                  placeholder='Confirmez votre mot de passe'
+                  placeholderTextColor='#888'
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
                   secureTextEntry
                   onFocus={() => handleInputFocus(120)}
                   editable={!loading}
-                  autoComplete="password-new"
+                  autoComplete='password-new'
                 />
 
                 <Text style={styles.passwordRequirements}>
-                  Le mot de passe doit contenir au moins 8 caractères, une majuscule,
-                  un chiffre et un caractère spécial
+                  Le mot de passe doit contenir au moins 8 caractères, une majuscule, un chiffre et
+                  un caractère spécial
                 </Text>
 
                 <Text style={styles.label}>Prénom</Text>
                 <TextInput
                   style={[styles.input, { color: '#fff' }]}
-                  placeholder="Ex: Jean"
-                  placeholderTextColor="#888"
+                  placeholder='Ex: Jean'
+                  placeholderTextColor='#888'
                   value={firstName}
                   onChangeText={setFirstName}
                   onFocus={() => handleInputFocus(220)}
                   editable={!loading}
-                  autoComplete="name-given"
+                  autoComplete='name-given'
                 />
 
                 <Text style={styles.label}>Nom</Text>
                 <TextInput
                   style={[styles.input, { color: '#fff' }]}
-                  placeholder="Ex: Dupont"
-                  placeholderTextColor="#888"
+                  placeholder='Ex: Dupont'
+                  placeholderTextColor='#888'
                   value={lastName}
                   onChangeText={setLastName}
                   onFocus={() => handleInputFocus(280)}
                   editable={!loading}
-                  autoComplete="name-family"
+                  autoComplete='name-family'
                 />
 
                 <Text style={styles.label}>Date de naissance</Text>
@@ -252,9 +259,9 @@ export default function RegisterScreen() {
 
                 <DateTimePickerModal
                   isVisible={isDatePickerVisible}
-                  mode="date"
+                  mode='date'
                   maximumDate={new Date()} // Pas de date future
-                  onConfirm={(date) => {
+                  onConfirm={date => {
                     setBirthDate(format(date, 'dd/MM/yyyy'));
                     setDatePickerVisibility(false);
                   }}
@@ -265,13 +272,13 @@ export default function RegisterScreen() {
                 <View style={[styles.input, { paddingVertical: 0, paddingHorizontal: 0 }]}>
                   <Picker
                     selectedValue={role}
-                    onValueChange={(value) => !loading && setRole(value)}
+                    onValueChange={value => !loading && setRole(value)}
                     style={{ color: '#fff', backgroundColor: 'transparent' }}
-                    dropdownIconColor="#fff"
+                    dropdownIconColor='#fff'
                     enabled={!loading}
                   >
-                    <Picker.Item label="Participant" value="participant" />
-                    <Picker.Item label="Organisateur" value="organisateur" />
+                    <Picker.Item label='Participant' value='participant' />
+                    <Picker.Item label='Organisateur' value='organisateur' />
                   </Picker>
                 </View>
 
@@ -292,9 +299,9 @@ export default function RegisterScreen() {
       <CustomModal
         visible={showSuccessModal}
         onClose={handleCloseSuccessModal}
-        title="Inscription réussie"
+        title='Inscription réussie'
         message="Votre compte a été créé avec succès! Vous allez être redirigé vers l'accueil."
-        type="success"
+        type='success'
       />
     </View>
   );

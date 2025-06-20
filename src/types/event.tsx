@@ -1,5 +1,5 @@
-import { AgeRestriction } from "./enum";
-import { EventTicket } from "./tickets";
+import { AgeRestriction } from './enum';
+import { EventTicket } from './tickets';
 
 // Type pour un événement
 export interface Event {

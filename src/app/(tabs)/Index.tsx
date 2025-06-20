@@ -12,7 +12,7 @@ export default function EventListScreen() {
       <Image
         source={require('../../../assets/images/safepasslogoV1.png')}
         style={styles.logo}
-        resizeMode="contain"
+        resizeMode='contain'
       />
     </View>
   );
@@ -20,7 +20,7 @@ export default function EventListScreen() {
   if (loading) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color="#0f0" />
+        <ActivityIndicator size='large' color='#0f0' />
       </View>
     );
   }
@@ -30,12 +30,9 @@ export default function EventListScreen() {
       <RefreshableList
         ListHeaderComponent={ListHeader}
         data={events}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={item => item.id.toString()}
         renderItem={({ item }) => (
-          <EventCard
-            {...item}
-            onPress={() => navigateToEventDetails(item.id)}
-          />
+          <EventCard {...item} onPress={() => navigateToEventDetails(item.id)} />
         )}
         onRefresh={handleRefresh}
         isRefreshing={refreshing}

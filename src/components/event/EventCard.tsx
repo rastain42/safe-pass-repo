@@ -33,43 +33,47 @@ const EventCard: React.FC<EventCardProps> = ({
 }) => {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>
-      <Image source={typeof image === 'string'
-        ? { uri: image }
-        : image || require('../../../assets/images/safepasslogoV1.png')}
+      <Image
+        source={
+          typeof image === 'string'
+            ? { uri: image }
+            : image || require('../../../assets/images/safepasslogoV1.png')
+        }
         style={styles.image}
       />
 
       <View style={styles.content}>
-        <Text style={styles.title} numberOfLines={1}>{name}</Text>
-
+        <Text style={styles.title} numberOfLines={1}>
+          {name}
+        </Text>
         <View style={styles.infoRow}>
-          <FontAwesome name="map-marker" size={16} color="#0f0" />
-          <Text style={styles.infoText} numberOfLines={1}>{location}</Text>
+          <FontAwesome name='map-marker' size={16} color='#0f0' />
+          <Text style={styles.infoText} numberOfLines={1}>
+            {location}
+          </Text>
         </View>
-
         <View style={styles.infoRow}>
-          <FontAwesome name="calendar" size={16} color="#0f0" />
+          <FontAwesome name='calendar' size={16} color='#0f0' />
           <Text style={styles.infoText}>
             {format(start_date, 'dd MMM yyyy - HH:mm', { locale: fr })}
           </Text>
         </View>
-
         <View style={styles.infoRow}>
-          <FontAwesome name="users" size={16} color="#0f0" />
+          <FontAwesome name='users' size={16} color='#0f0' />
           <Text style={styles.infoText}>{capacity} places</Text>
-        </View>        <View style={styles.descriptionContainer}>
+        </View>{' '}
+        <View style={styles.descriptionContainer}>
           <Text style={styles.description} numberOfLines={2}>
             {description}
           </Text>
         </View>
-
         <View style={styles.footer}>
           <View style={styles.restrictions}>
             <View style={styles.ageRestriction}>
               <FontAwesome
                 name={age_restriction === AgeRestriction.None ? 'universal-access' : 'warning'}
                 size={16}
-                color="#0f0"
+                color='#0f0'
               />
               <Text style={styles.ageText}>
                 {age_restriction === AgeRestriction.None ? 'Tout public' : 'Réservé +18'}
@@ -77,7 +81,7 @@ const EventCard: React.FC<EventCardProps> = ({
             </View>
             {allowUnverifiedUsers && (
               <View style={styles.verificationStatus}>
-                <FontAwesome name="user-plus" size={14} color="#ff9800" />
+                <FontAwesome name='user-plus' size={14} color='#ff9800' />
                 <Text style={styles.verificationText}>Ouvert aux non-vérifiés</Text>
               </View>
             )}
@@ -136,7 +140,8 @@ const styles = StyleSheet.create({
     color: '#aaa',
     fontSize: 14,
     lineHeight: 20,
-  }, footer: {
+  },
+  footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

@@ -1,11 +1,23 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Alert, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+} from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { auth } from '@/config/firebase';
-import { analyzeIdDocument, type DocumentAnalysisResult } from '@/services/identity/document.service';
+import {
+  analyzeIdDocument,
+  type DocumentAnalysisResult,
+} from '@/services/identity/document.service';
 import { compareFaces, type BiometricComparisonResult } from '@/services/auth/biometric.service';
 import { cleanupAllUserTempFiles } from '@/services/shared/cleanup.service';
 import MRZValidationDisplay from '@/components/identity/MRZValidationDisplay';
@@ -17,7 +29,8 @@ export default function VerifyIdentityScreen() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [analyzing, setAnalyzing] = useState(false); const [idFront, setIdFront] = useState<string | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [idFront, setIdFront] = useState<string | null>(null);
   const [selfie, setSelfie] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [analysisResult, setAnalysisResult] = useState<DocumentAnalysisResult | null>(null);
@@ -28,7 +41,7 @@ export default function VerifyIdentityScreen() {
   const initialData: IdentityData = {
     firstName: 'Rom', // TODO: récupérer depuis le profil utilisateur
     lastName: 'Mich',
-    birthDate: '14/12/2002'
+    birthDate: '14/12/2002',
   };
   const {
     showReconciliationModal,
@@ -37,22 +50,21 @@ export default function VerifyIdentityScreen() {
     processVerification,
     handleReconciliationChoice,
     closeReconciliationModal,
-  } = useDataReconciliation(
-    auth.currentUser?.uid || '',
-    initialData,
-    (success) => {
-      if (success) {
-        router.push('/(tabs)/Profile');
-      }
+  } = useDataReconciliation(auth.currentUser?.uid || '', initialData, success => {
+    if (success) {
+      router.push('/(tabs)/Profile');
     }
-  );
+  });
 
   const pickImage = async (setter: (value: string | null) => void, isSelfie: boolean = false) => {
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
 
       if (status !== 'granted') {
-        Alert.alert('Permission refusée', 'Nous avons besoin de votre permission pour accéder à la caméra');
+        Alert.alert(
+          'Permission refusée',
+          'Nous avons besoin de votre permission pour accéder à la caméra'
+        );
         return;
       }
 
@@ -64,7 +76,7 @@ export default function VerifyIdentityScreen() {
       });
 
       if (!result.canceled && result.assets[0].uri) {
-        setter(result.assets[0].uri);        // Si c'est le recto de la carte, analyser automatiquement
+        setter(result.assets[0].uri); // Si c'est le recto de la carte, analyser automatiquement
         if (setter === setIdFront) {
           await handleAnalyzeDocument(result.assets[0].uri);
         }
@@ -75,8 +87,8 @@ export default function VerifyIdentityScreen() {
         }
       }
     } catch (error) {
-      console.error('Erreur lors de la capture d\'image:', error);
-      Alert.alert('Erreur', 'Impossible d\'accéder à la caméra. Veuillez réessayer.');
+      console.error("Erreur lors de la capture d'image:", error);
+      Alert.alert('Erreur', "Impossible d'accéder à la caméra. Veuillez réessayer.");
     }
   };
 
@@ -91,11 +103,11 @@ export default function VerifyIdentityScreen() {
     return new Promise<string>((resolve, reject) => {
       uploadTask.on(
         'state_changed',
-        (snapshot) => {
+        snapshot => {
           const newProgress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
           setProgress(newProgress);
         },
-        (error) => {
+        error => {
           reject(error);
         },
         async () => {
@@ -142,16 +154,15 @@ export default function VerifyIdentityScreen() {
       } else {
         Alert.alert(
           'Analyse échouée ❌',
-          'Le document n\'a pas pu être analysé automatiquement.\n\nLa vérification manuelle sera effectuée.',
+          "Le document n'a pas pu être analysé automatiquement.\n\nLa vérification manuelle sera effectuée.",
           [{ text: 'Continuer' }]
         );
       }
-
     } catch (error) {
       console.error('Erreur analyse:', error);
 
       // Gestion des erreurs spécifiques
-      let errorMessage = 'Impossible d\'analyser le document automatiquement.';
+      let errorMessage = "Impossible d'analyser le document automatiquement.";
 
       if (error instanceof Error) {
         if (error.message.includes('connecté')) {
@@ -159,12 +170,12 @@ export default function VerifyIdentityScreen() {
         } else if (error.message.includes('permissions')) {
           errorMessage = 'Permissions insuffisantes. Veuillez vous reconnecter.';
         } else if (error.message.includes('non disponible')) {
-          errorMessage = 'Service d\'analyse temporairement indisponible.';
+          errorMessage = "Service d'analyse temporairement indisponible.";
         }
       }
 
       Alert.alert(
-        'Erreur d\'analyse',
+        "Erreur d'analyse",
         `${errorMessage}\n\nLa vérification manuelle sera effectuée à la place.`,
         [{ text: 'Continuer' }]
       );
@@ -227,14 +238,15 @@ export default function VerifyIdentityScreen() {
             `Les visages ne correspondent pas suffisamment.\n\nSimilarité: ${Math.round(result.similarityScore * 100)}%\n\nVeuillez reprendre le selfie ou la vérification sera manuelle.`,
             [
               { text: 'Reprendre le selfie', onPress: () => setSelfie(null) },
-              { text: 'Continuer quand même', style: 'cancel' }
+              { text: 'Continuer quand même', style: 'cancel' },
             ]
           );
         }
       } else {
         Alert.alert(
           'Erreur de comparaison ❌',
-          result.error || 'Impossible de comparer les visages.\n\nLa vérification manuelle sera effectuée.',
+          result.error ||
+            'Impossible de comparer les visages.\n\nLa vérification manuelle sera effectuée.',
           [{ text: 'Continuer' }]
         );
       }
@@ -243,13 +255,12 @@ export default function VerifyIdentityScreen() {
       try {
         console.log('Nettoyage des fichiers temporaires...');
         await Promise.allSettled([
-          fetch(documentURL, { method: 'DELETE' }).catch(() => { }),
-          fetch(selfieURL, { method: 'DELETE' }).catch(() => { })
+          fetch(documentURL, { method: 'DELETE' }).catch(() => {}),
+          fetch(selfieURL, { method: 'DELETE' }).catch(() => {}),
         ]);
       } catch (cleanupError) {
         console.warn('Erreur lors du nettoyage:', cleanupError);
       }
-
     } catch (error) {
       console.error('Erreur comparaison biométrique:', error);
       Alert.alert(
@@ -263,7 +274,10 @@ export default function VerifyIdentityScreen() {
   };
   const handleSubmit = async () => {
     if (!idFront || !auth.currentUser || !analysisResult) {
-      Alert.alert('Erreur', 'Veuillez au minimum prendre une photo de votre pièce d\'identité et attendre l\'analyse');
+      Alert.alert(
+        'Erreur',
+        "Veuillez au minimum prendre une photo de votre pièce d'identité et attendre l'analyse"
+      );
       return;
     }
 
@@ -282,10 +296,7 @@ export default function VerifyIdentityScreen() {
       // Upload du selfie seulement s'il est fourni
       let selfieURL = null;
       if (selfie) {
-        selfieURL = await uploadImage(
-          selfie,
-          `verifications/${userId}/selfie_${timestamp}.jpg`
-        );
+        selfieURL = await uploadImage(selfie, `verifications/${userId}/selfie_${timestamp}.jpg`);
       }
 
       // Préparer les documents de vérification
@@ -324,22 +335,24 @@ export default function VerifyIdentityScreen() {
           hasRawText: true,
           processorType: 'custom_extractor',
         },
-        biometric_result: biometricResult ? {
-          match: biometricResult.match,
-          confidence: biometricResult.confidence,
-          similarityScore: biometricResult.confidence,
-          success: biometricResult.success,
-          details: {
-            faceDetectedInDocument: true,
-            faceDetectedInSelfie: true,
-            matchDecision: biometricResult.match ? 'match' : 'no_match',
-            qualityScore: 1,
-            thresholds: {
-              high: 0.65,
-              low: 0.45,
-            },
-          },
-        } : undefined,
+        biometric_result: biometricResult
+          ? {
+              match: biometricResult.match,
+              confidence: biometricResult.confidence,
+              similarityScore: biometricResult.confidence,
+              success: biometricResult.success,
+              details: {
+                faceDetectedInDocument: true,
+                faceDetectedInSelfie: true,
+                matchDecision: biometricResult.match ? 'match' : 'no_match',
+                qualityScore: 1,
+                thresholds: {
+                  high: 0.65,
+                  low: 0.45,
+                },
+              },
+            }
+          : undefined,
       };
 
       // Utiliser le nouveau système de vérification avec réconciliation
@@ -359,12 +372,11 @@ export default function VerifyIdentityScreen() {
       } catch (cleanupError) {
         console.warn('Erreur lors du nettoyage:', cleanupError);
       }
-
     } catch (error) {
       console.error('Erreur lors de la vérification:', error);
       Alert.alert(
-        'Erreur d\'envoi',
-        'Une erreur est survenue lors de l\'envoi de votre demande. Veuillez réessayer.'
+        "Erreur d'envoi",
+        "Une erreur est survenue lors de l'envoi de votre demande. Veuillez réessayer."
       );
     } finally {
       setLoading(false);
@@ -378,48 +390,68 @@ export default function VerifyIdentityScreen() {
 
     return (
       <View style={styles.analysisResult}>
-        <Text style={styles.analysisTitle}>✨ Informations détectées automatiquement:</Text>        {analysisResult.data.firstName && analysisResult.data.firstName.value && (
+        <Text style={styles.analysisTitle}>✨ Informations détectées automatiquement:</Text>{' '}
+        {analysisResult.data.firstName && analysisResult.data.firstName.value && (
           <Text style={styles.analysisText}>
             👤 Prénom: {String(analysisResult.data.firstName.value)}
-            <Text style={styles.confidenceText}> ({Math.round((analysisResult.data.firstName.confidence || 0) * 100)}%)</Text>
+            <Text style={styles.confidenceText}>
+              {' '}
+              ({Math.round((analysisResult.data.firstName.confidence || 0) * 100)}%)
+            </Text>
           </Text>
         )}
-
         {analysisResult.data.lastName && analysisResult.data.lastName.value && (
           <Text style={styles.analysisText}>
             👤 Nom: {String(analysisResult.data.lastName.value)}
-            <Text style={styles.confidenceText}> ({Math.round((analysisResult.data.lastName.confidence || 0) * 100)}%)</Text>
+            <Text style={styles.confidenceText}>
+              {' '}
+              ({Math.round((analysisResult.data.lastName.confidence || 0) * 100)}%)
+            </Text>
           </Text>
         )}
-
         {analysisResult.data.birthDate && analysisResult.data.birthDate.value && (
           <Text style={styles.analysisText}>
             📅 Date de naissance: {String(analysisResult.data.birthDate.value)}
-            <Text style={styles.confidenceText}> ({Math.round((analysisResult.data.birthDate.confidence || 0) * 100)}%)</Text>
+            <Text style={styles.confidenceText}>
+              {' '}
+              ({Math.round((analysisResult.data.birthDate.confidence || 0) * 100)}%)
+            </Text>
           </Text>
         )}
-
         {analysisResult.data.documentNumber && analysisResult.data.documentNumber.value && (
           <Text style={styles.analysisText}>
             🔢 N° document: {String(analysisResult.data.documentNumber.value)}
-            <Text style={styles.confidenceText}> ({Math.round((analysisResult.data.documentNumber.confidence || 0) * 100)}%)</Text>
+            <Text style={styles.confidenceText}>
+              {' '}
+              ({Math.round((analysisResult.data.documentNumber.confidence || 0) * 100)}%)
+            </Text>
           </Text>
-        )}        <Text style={[styles.analysisText, { color: confidenceColor, fontWeight: 'bold', marginTop: 8 }]}>
+        )}{' '}
+        <Text
+          style={[
+            styles.analysisText,
+            { color: confidenceColor, fontWeight: 'bold', marginTop: 8 },
+          ]}
+        >
           🎯 Confiance globale: {String(confidence || 0)}%
-        </Text>        {confidence > 80 && (
+        </Text>{' '}
+        {confidence > 80 && (
           <Text style={styles.successText}>
             ✅ Excellente qualité ! Vérification automatique possible.
           </Text>
-        )}        {analysisResult.mrzValidation && (
+        )}{' '}
+        {analysisResult.mrzValidation && (
           <View style={styles.mrzStatus}>
             <Text style={styles.mrzTitle}>
-              🔍 Validation MRZ: {analysisResult.mrzValidation.isValid ? '✅ Valide' : '❌ Invalide'}
+              🔍 Validation MRZ:{' '}
+              {analysisResult.mrzValidation.isValid ? '✅ Valide' : '❌ Invalide'}
             </Text>
             <Text style={styles.mrzConfidence}>
               Confiance MRZ: {Math.round((analysisResult.mrzValidation.confidence || 0) * 100)}%
             </Text>
           </View>
-        )}      </View>
+        )}{' '}
+      </View>
     );
   };
   const renderBiometricResult = () => {
@@ -427,40 +459,47 @@ export default function VerifyIdentityScreen() {
 
     const similarityScore = Math.round(biometricResult.similarityScore * 100);
     const confidence = Math.round(biometricResult.confidence * 100);
-    const statusColor = biometricResult.match && confidence > 70 ? '#0f0' : confidence > 50 ? '#ffa500' : '#ff4444';
+    const statusColor =
+      biometricResult.match && confidence > 70 ? '#0f0' : confidence > 50 ? '#ffa500' : '#ff4444';
 
     // Nouvelles informations de débogage
     const matchDecision = biometricResult.details?.matchDecision || 'unknown';
-    const qualityScore = biometricResult.details?.qualityScore ? Math.round(biometricResult.details.qualityScore * 100) : 0;
+    const qualityScore = biometricResult.details?.qualityScore
+      ? Math.round(biometricResult.details.qualityScore * 100)
+      : 0;
 
     return (
       <View style={styles.biometricResult}>
         <Text style={styles.biometricTitle}>
-          👤 Comparaison biométrique: {biometricResult.match ? '✅ Correspondance' : '❌ Pas de correspondance'}
+          👤 Comparaison biométrique:{' '}
+          {biometricResult.match ? '✅ Correspondance' : '❌ Pas de correspondance'}
         </Text>
 
-        <Text style={styles.biometricText}>
-          🎯 Similarité des visages: {similarityScore}%
-        </Text>
+        <Text style={styles.biometricText}>🎯 Similarité des visages: {similarityScore}%</Text>
 
-        <Text style={[styles.biometricText, { color: statusColor, fontWeight: 'bold', marginTop: 8 }]}>
+        <Text
+          style={[styles.biometricText, { color: statusColor, fontWeight: 'bold', marginTop: 8 }]}
+        >
           🔒 Confiance biométrique: {confidence}%
         </Text>
 
-        <Text style={styles.biometricText}>
-          📊 Qualité des images: {qualityScore}%
-        </Text>
+        <Text style={styles.biometricText}>📊 Qualité des images: {qualityScore}%</Text>
 
         <Text style={styles.biometricText}>
-          🤖 Décision algorithmique: {matchDecision === 'match' ? '✅ Match confirmé' :
-            matchDecision === 'possible_match' ? '⚠️ Match possible' :
-              matchDecision === 'no_match' ? '❌ Pas de match' : '❓ Incertain'}
+          🤖 Décision algorithmique:{' '}
+          {matchDecision === 'match'
+            ? '✅ Match confirmé'
+            : matchDecision === 'possible_match'
+              ? '⚠️ Match possible'
+              : matchDecision === 'no_match'
+                ? '❌ Pas de match'
+                : '❓ Incertain'}
         </Text>
 
         {biometricResult.details?.thresholds && (
           <Text style={[styles.biometricText, { fontSize: 12, color: '#666', marginTop: 4 }]}>
-            Seuils: ≥{Math.round(biometricResult.details.thresholds.high * 100)}% (confirmé),
-            ≥{Math.round(biometricResult.details.thresholds.low * 100)}% (possible)
+            Seuils: ≥{Math.round(biometricResult.details.thresholds.high * 100)}% (confirmé), ≥
+            {Math.round(biometricResult.details.thresholds.low * 100)}% (possible)
           </Text>
         )}
 
@@ -481,43 +520,33 @@ export default function VerifyIdentityScreen() {
   const renderStepIndicator = () => {
     return (
       <View style={styles.stepIndicator}>
-        <View style={[
-          styles.stepDot,
-          step >= 1 ? styles.activeStep : styles.inactiveStep
-        ]} />
+        <View style={[styles.stepDot, step >= 1 ? styles.activeStep : styles.inactiveStep]} />
         <View style={styles.stepLine} />
-        <View style={[
-          styles.stepDot,
-          step >= 2 ? styles.activeStep : styles.inactiveStep
-        ]} />
+        <View style={[styles.stepDot, step >= 2 ? styles.activeStep : styles.inactiveStep]} />
       </View>
     );
   };
 
   if (loading) {
-    return (<View style={styles.loadingContainer}>
-      <ActivityIndicator size="large" color="#0f0" />
-      <Text style={styles.loadingText}>
-        Envoi en cours ({(progress || 0).toFixed(0)}%)
-      </Text>
-      <Text style={styles.loadingSubText}>
-        Téléchargement de vos documents...
-      </Text>
-    </View>
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size='large' color='#0f0' />
+        <Text style={styles.loadingText}>Envoi en cours ({(progress || 0).toFixed(0)}%)</Text>
+        <Text style={styles.loadingSubText}>Téléchargement de vos documents...</Text>
+      </View>
     );
   }
   if (analyzing || comparingFaces) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0f0" />
+        <ActivityIndicator size='large' color='#0f0' />
         <Text style={styles.loadingText}>
           {analyzing ? '🔍 Analyse en cours...' : '👤 Comparaison biométrique...'}
         </Text>
         <Text style={styles.loadingSubText}>
           {analyzing
             ? 'Extraction des informations de votre document'
-            : 'Comparaison de votre visage avec le document'
-          }
+            : 'Comparaison de votre visage avec le document'}
         </Text>
       </View>
     );
@@ -525,53 +554,55 @@ export default function VerifyIdentityScreen() {
 
   return (
     <>
-      <Stack.Screen options={{
-        title: "Vérification d'identité",
-        headerStyle: { backgroundColor: '#111' },
-        headerTintColor: '#fff',
-      }} />
-
+      <Stack.Screen
+        options={{
+          title: "Vérification d'identité",
+          headerStyle: { backgroundColor: '#111' },
+          headerTintColor: '#fff',
+        }}
+      />
       <View style={styles.container}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-        >          <View style={styles.card}>
+        >
+          {' '}
+          <View style={styles.card}>
             <Text style={styles.title}>Vérification d'identité</Text>
             <Text style={styles.subtitle}>
               Étape {String(step || 1)}/2 - Vérification automatique activée
-            </Text>            {renderStepIndicator()}
-
+            </Text>{' '}
+            {renderStepIndicator()}
             {step === 1 && (
               <>
                 <Text style={styles.instruction}>
-                  📷 Prenez en photo le <Text style={styles.highlight}>recto</Text> de votre pièce d'identité
+                  📷 Prenez en photo le <Text style={styles.highlight}>recto</Text> de votre pièce
+                  d'identité
                 </Text>
                 <Text style={styles.hint}>
-                  L'analyse automatique démarrera après la capture pour vérifier l'authenticité du document
+                  L'analyse automatique démarrera après la capture pour vérifier l'authenticité du
+                  document
                 </Text>
-
-                <TouchableOpacity
-                  style={styles.imageButton}
-                  onPress={() => pickImage(setIdFront)}
-                >
+                <TouchableOpacity style={styles.imageButton} onPress={() => pickImage(setIdFront)}>
                   {idFront ? (
                     <Image source={{ uri: idFront }} style={styles.preview} />
                   ) : (
                     <View style={styles.imagePlaceholder}>
-                      <FontAwesome name="id-card" size={32} color="#0f0" />
+                      <FontAwesome name='id-card' size={32} color='#0f0' />
                       <Text style={styles.placeholderText}>Recto de la carte</Text>
                     </View>
                   )}
-                </TouchableOpacity>            {renderAnalysisResult()}
-
+                </TouchableOpacity>{' '}
+                {renderAnalysisResult()}
                 {/* Affichage de la validation MRZ si disponible */}
                 {analysisResult?.mrzValidation && (
                   <MRZValidationDisplay
                     mrzValidation={analysisResult.mrzValidation}
                     crossValidation={analysisResult.crossValidation}
                   />
-                )}            {/* Bouton pour continuer - toujours visible après avoir pris une photo */}
+                )}{' '}
+                {/* Bouton pour continuer - toujours visible après avoir pris une photo */}
                 {idFront && (
                   <TouchableOpacity
                     style={[styles.nextButton, { marginTop: 20 }]}
@@ -579,7 +610,8 @@ export default function VerifyIdentityScreen() {
                   >
                     <Text style={styles.buttonText}>Continuer vers le selfie →</Text>
                   </TouchableOpacity>
-                )}            {/* Bouton pour analyser manuellement si pas d'analyse automatique */}
+                )}{' '}
+                {/* Bouton pour analyser manuellement si pas d'analyse automatique */}
                 {idFront && !analysisResult && !analyzing && (
                   <TouchableOpacity
                     style={[styles.analyzeButton, { marginTop: 12 }]}
@@ -589,14 +621,17 @@ export default function VerifyIdentityScreen() {
                   </TouchableOpacity>
                 )}
               </>
-            )}          {step === 2 && (
+            )}{' '}
+            {step === 2 && (
               <>
                 <Text style={styles.instruction}>
-                  🤳 Prenez un <Text style={styles.highlight}>selfie</Text> avec votre visage clairement visible
-                </Text>                <Text style={styles.hint}>
-                  Cette photo permettra de vérifier la correspondance avec votre pièce d'identité (optionnel)
+                  🤳 Prenez un <Text style={styles.highlight}>selfie</Text> avec votre visage
+                  clairement visible
+                </Text>{' '}
+                <Text style={styles.hint}>
+                  Cette photo permettra de vérifier la correspondance avec votre pièce d'identité
+                  (optionnel)
                 </Text>
-
                 <TouchableOpacity
                   style={styles.imageButton}
                   onPress={() => pickImage(setSelfie, true)}
@@ -605,15 +640,13 @@ export default function VerifyIdentityScreen() {
                     <Image source={{ uri: selfie }} style={styles.preview} />
                   ) : (
                     <View style={styles.imagePlaceholder}>
-                      <FontAwesome name="camera" size={32} color="#0f0" />
+                      <FontAwesome name='camera' size={32} color='#0f0' />
                       <Text style={styles.placeholderText}>Selfie</Text>
                     </View>
                   )}
                 </TouchableOpacity>
-
                 {/* Affichage du résultat biométrique si disponible */}
                 {renderBiometricResult()}
-
                 {analysisResult && (
                   <View style={styles.summaryCard}>
                     <Text style={styles.summaryTitle}>📋 Résumé de votre demande</Text>
@@ -622,50 +655,41 @@ export default function VerifyIdentityScreen() {
                         ? '✅ Document analysé avec succès - Vérification automatique possible'
                         : analysisResult.success
                           ? '⚠️ Document analysé mais qualité moyenne - Vérification manuelle requise'
-                          : '❌ Document non analysable - Vérification manuelle requise'
-                      }
-                    </Text>                {analysisResult.mrzValidation && (
+                          : '❌ Document non analysable - Vérification manuelle requise'}
+                    </Text>{' '}
+                    {analysisResult.mrzValidation && (
                       <Text style={[styles.summaryText, { marginTop: 8 }]}>
                         🔍 MRZ: {analysisResult.mrzValidation.isValid ? '✅ Valide' : '❌ Invalide'}
                         ({Math.round((analysisResult.mrzValidation.confidence || 0) * 100)}%)
                       </Text>
                     )}
                   </View>
-                )}<View style={styles.buttonRow}>
-                  <TouchableOpacity
-                    style={styles.backButton}
-                    onPress={() => setStep(1)}
-                  >
+                )}
+                <View style={styles.buttonRow}>
+                  <TouchableOpacity style={styles.backButton} onPress={() => setStep(1)}>
                     <Text style={styles.backButtonText}>← Retour</Text>
                   </TouchableOpacity>
 
                   {selfie ? (
-                    <TouchableOpacity
-                      style={styles.submitButton}
-                      onPress={handleSubmit}
-                    >
+                    <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
                       <Text style={styles.buttonText}>🚀 Terminer</Text>
                     </TouchableOpacity>
                   ) : (
-                    <TouchableOpacity
-                      style={styles.skipButton}
-                      onPress={handleSubmit}
-                    >
+                    <TouchableOpacity style={styles.skipButton} onPress={handleSubmit}>
                       <Text style={styles.skipButtonText}>⏭️ Passer cette étape</Text>
                     </TouchableOpacity>
                   )}
-                </View>          </>
+                </View>{' '}
+              </>
             )}
           </View>
         </ScrollView>
 
-        <TouchableOpacity
-          style={styles.cancelButton}
-          onPress={() => router.back()}
-        >
+        <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()}>
           <Text style={styles.cancelButtonText}>✕ Annuler</Text>
         </TouchableOpacity>
-      </View>      {/* Modal de réconciliation des données */}
+      </View>{' '}
+      {/* Modal de réconciliation des données */}
       {showReconciliationModal && reconciliation && idData && (
         <DataReconciliationModal
           visible={showReconciliationModal}
@@ -688,7 +712,8 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-  }, scrollContent: {
+  },
+  scrollContent: {
     paddingBottom: 100, // Plus d'espace pour que les boutons soient visibles
   },
   card: {
@@ -780,7 +805,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 12,
-  }, nextButton: {
+  },
+  nextButton: {
     backgroundColor: '#0f0',
     padding: 16,
     borderRadius: 10,
@@ -800,7 +826,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     flex: 1,
-  }, submitButton: {
+  },
+  submitButton: {
     backgroundColor: '#0f0',
     padding: 16,
     borderRadius: 10,
@@ -882,7 +909,8 @@ const styles = StyleSheet.create({
   confidenceText: {
     color: '#888',
     fontSize: 12,
-  }, successText: {
+  },
+  successText: {
     color: '#0f0',
     fontSize: 12,
     fontWeight: 'bold',

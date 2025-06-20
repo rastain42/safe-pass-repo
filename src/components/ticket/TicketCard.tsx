@@ -1,10 +1,10 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
-import { FontAwesome } from "@expo/vector-icons";
-import { useEventDetails } from "@/hooks/events/useEventDetails";
-import { UserTicket } from "@/types/tickets";
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { FontAwesome } from '@expo/vector-icons';
+import { useEventDetails } from '@/hooks/events/useEventDetails';
+import { UserTicket } from '@/types/tickets';
 
 interface TicketCardProps {
   ticket: UserTicket;
@@ -15,32 +15,26 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket, onPress }) => {
   const { eventName, eventStartDate, loading } = useEventDetails(ticket.eventId);
 
   const formatEventDate = () => {
-    if (!eventStartDate) return "Date non disponible";
+    if (!eventStartDate) return 'Date non disponible';
     try {
-      return "le " + format(eventStartDate, "dd MMM yyyy à HH:mm", { locale: fr });
+      return 'le ' + format(eventStartDate, 'dd MMM yyyy à HH:mm', { locale: fr });
     } catch (error) {
-      console.error("Erreur de formatage de date :", error);
-      return "Date invalide";
+      console.error('Erreur de formatage de date :', error);
+      return 'Date invalide';
     }
   };
 
   return (
-    <TouchableOpacity
-      style={styles.container}
-      onPress={onPress}
-      disabled={loading}
-    >
+    <TouchableOpacity style={styles.container} onPress={onPress} disabled={loading}>
       <View style={styles.header}>
         <Text style={styles.eventName}>{eventName}</Text>
         <View
           style={[
             styles.statusBadge,
-            ticket.status === "valid" ? styles.validBadge : styles.usedBadge,
+            ticket.status === 'valid' ? styles.validBadge : styles.usedBadge,
           ]}
         >
-          <Text style={styles.statusText}>
-            {ticket.status === "valid" ? "Valide" : "Utilisé"}
-          </Text>
+          <Text style={styles.statusText}>{ticket.status === 'valid' ? 'Valide' : 'Utilisé'}</Text>
         </View>
       </View>
 
@@ -52,7 +46,7 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket, onPress }) => {
       </View>
 
       <View style={styles.footer}>
-        <FontAwesome name="qrcode" size={14} color="#0f0" />
+        <FontAwesome name='qrcode' size={14} color='#0f0' />
         <Text style={styles.footerText}>Afficher le QR code</Text>
       </View>
     </TouchableOpacity>
@@ -61,23 +55,23 @@ const TicketCard: React.FC<TicketCardProps> = ({ ticket, onPress }) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#111",
+    backgroundColor: '#111',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
     borderLeftWidth: 4,
-    borderLeftColor: "#0f0",
+    borderLeftColor: '#0f0',
   },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 12,
   },
   eventName: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     flex: 1,
   },
   statusBadge: {
@@ -86,35 +80,35 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   validBadge: {
-    backgroundColor: "rgba(0, 255, 0, 0.2)",
+    backgroundColor: 'rgba(0, 255, 0, 0.2)',
   },
   usedBadge: {
-    backgroundColor: "rgba(255, 0, 0, 0.2)",
+    backgroundColor: 'rgba(255, 0, 0, 0.2)',
   },
   statusText: {
     fontSize: 12,
-    color: "#fff",
-    fontWeight: "500",
+    color: '#fff',
+    fontWeight: '500',
   },
   content: {
     marginBottom: 12,
   },
   date: {
-    color: "#888",
+    color: '#888',
     fontSize: 14,
     marginBottom: 8,
   },
   price: {
-    color: "#0f0",
+    color: '#0f0',
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   footer: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   footerText: {
-    color: "#0f0",
+    color: '#0f0',
     marginLeft: 8,
     fontSize: 14,
   },

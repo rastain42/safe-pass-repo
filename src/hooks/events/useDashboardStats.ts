@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { auth } from "@/config/firebase";
-import * as eventService from "@/services/events/event.service";
-import { EventTicket } from "@/types/tickets";
+import { useState, useEffect } from 'react';
+import { auth } from '@/config/firebase';
+import * as eventService from '@/services/events/event.service';
+import { EventTicket } from '@/types/tickets';
 
 interface EventStats {
   id: string;
@@ -31,7 +31,7 @@ export function useDashboardStats() {
   const calculateStats = async (): Promise<DashboardStats> => {
     const user = auth.currentUser;
     if (!user) {
-      throw new Error("Utilisateur non authentifié");
+      throw new Error('Utilisateur non authentifié');
     }
 
     try {
@@ -49,15 +49,11 @@ export function useDashboardStats() {
 
       for (const event of events) {
         // Simulation temporaire des billets vendus (en attendant l'implémentation complète des UserTickets)
-        const eventTicketsSold = Math.floor(
-          Math.random() * Math.min(event.capacity / 2, 50)
-        );
+        const eventTicketsSold = Math.floor(Math.random() * Math.min(event.capacity / 2, 50));
         const averageTicketPrice =
           event.tickets && event.tickets.length > 0
-            ? event.tickets.reduce(
-                (sum: number, ticket: EventTicket) => sum + ticket.price,
-                0
-              ) / event.tickets.length
+            ? event.tickets.reduce((sum: number, ticket: EventTicket) => sum + ticket.price, 0) /
+              event.tickets.length
             : 25;
         const eventRevenue = eventTicketsSold * averageTicketPrice;
 
@@ -86,8 +82,7 @@ export function useDashboardStats() {
 
       // Trier les événements récents par date (plus récents en premier)
       recentEvents.sort(
-        (a, b) =>
-          new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
+        (a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
       );
 
       return {
@@ -95,15 +90,13 @@ export function useDashboardStats() {
         totalTicketsSold,
         totalParticipants: totalTicketsSold,
         totalRevenue,
-        averageFillRate:
-          totalCapacity > 0 ? (totalTicketsSold / totalCapacity) * 100 : 0,
-        averageTicketPrice:
-          totalTicketsSold > 0 ? totalRevenue / totalTicketsSold : 0,
+        averageFillRate: totalCapacity > 0 ? (totalTicketsSold / totalCapacity) * 100 : 0,
+        averageTicketPrice: totalTicketsSold > 0 ? totalRevenue / totalTicketsSold : 0,
         upcomingEvents,
         recentEvents,
       };
     } catch (error) {
-      console.error("Erreur lors du calcul des statistiques:", error);
+      console.error('Erreur lors du calcul des statistiques:', error);
       throw error;
     }
   };
@@ -115,8 +108,8 @@ export function useDashboardStats() {
       const newStats = await calculateStats();
       setStats(newStats);
     } catch (err) {
-      console.error("Erreur lors du calcul des statistiques:", err);
-      setError(err instanceof Error ? err.message : "Erreur inconnue");
+      console.error('Erreur lors du calcul des statistiques:', err);
+      setError(err instanceof Error ? err.message : 'Erreur inconnue');
     } finally {
       setLoading(false);
     }

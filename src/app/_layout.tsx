@@ -13,9 +13,7 @@ import { StripeProvider } from '@stripe/stripe-react-native';
 import { auth, getAuthData } from '@/config/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
-export {
-  ErrorBoundary,
-} from 'expo-router';
+export { ErrorBoundary } from 'expo-router';
 
 export const unstable_settings = {
   initialRouteName: '(auth)/Login',
@@ -40,13 +38,14 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
-  useEffect(() => {    // Utiliser l'instance auth de votre configuration
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+  useEffect(() => {
+    // Utiliser l'instance auth de votre configuration
+    const unsubscribe = onAuthStateChanged(auth, async firebaseUser => {
       if (firebaseUser) {
         // Récupérer les données additionnelles enregistrées dans SecureStore si nécessaire
-        const firstName = await getAuthData('userFirstName') || '';
-        const lastName = await getAuthData('userLastName') || '';
-        const birthDate = await getAuthData('userBirthDate') || '';
+        const firstName = (await getAuthData('userFirstName')) || '';
+        const lastName = (await getAuthData('userLastName')) || '';
+        const birthDate = (await getAuthData('userBirthDate')) || '';
 
         const mappedUser: User = {
           id: firebaseUser.uid,
@@ -58,7 +57,7 @@ export default function RootLayout() {
           initialData: {
             firstName,
             lastName,
-            birthDate
+            birthDate,
           },
 
           // Statut de vérification basé sur l'email pour l'instant
@@ -82,13 +81,15 @@ export default function RootLayout() {
     return null;
   }
 
-  const publishableKey = process.env.STRIPE_PUBLIC_KEY || "pk_test_51QwQLRQWcv6PLtrYa32YumVBYQPUHpBPazKdVyveRKVpad74Rcj7b1GENohzQNGfoBPnZSkKhSYpf8hdy4jgdKxG00lCpuu2mX";
+  const publishableKey =
+    process.env.STRIPE_PUBLIC_KEY ||
+    'pk_test_51QwQLRQWcv6PLtrYa32YumVBYQPUHpBPazKdVyveRKVpad74Rcj7b1GENohzQNGfoBPnZSkKhSYpf8hdy4jgdKxG00lCpuu2mX';
 
   return (
     <StripeProvider
       publishableKey={publishableKey}
-      urlScheme="safepass"
-      merchantIdentifier="merchant.com.safepass"
+      urlScheme='safepass'
+      merchantIdentifier='merchant.com.safepass'
     >
       <RootLayoutNav user={user} />
     </StripeProvider>
@@ -113,22 +114,12 @@ function RootLayoutNav({ user }: RootLayoutNavProps) {
             headerTintColor: colorScheme === 'dark' ? '#fff' : '#000',
             contentStyle: {
               backgroundColor: colorScheme === 'dark' ? '#000' : '#fff',
-            }
+            },
           }}
         >
-          <Stack.Screen
-            name="index"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="(auth)"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="(tabs)"
-            options={{ headerShown: false }}
-          />
-
+          <Stack.Screen name='index' options={{ headerShown: false }} />
+          <Stack.Screen name='(auth)' options={{ headerShown: false }} />
+          <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
         </Stack>
       </ThemeProvider>
     </>

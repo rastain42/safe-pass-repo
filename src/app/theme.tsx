@@ -7,11 +7,11 @@ interface ColorSchemeStore {
   toggleColorScheme: () => void;
 }
 
-export const useColorScheme = create<ColorSchemeStore>((set) => ({
+export const useColorScheme = create<ColorSchemeStore>(set => ({
   colorScheme: 'dark',
   toggleColorScheme: () =>
-    set((state) => ({
-      colorScheme: state.colorScheme === 'light' ? 'dark' : 'light'
+    set(state => ({
+      colorScheme: state.colorScheme === 'light' ? 'dark' : 'light',
     })),
 }));
 

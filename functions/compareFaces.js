@@ -1,7 +1,7 @@
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { ImageAnnotatorClient } = require("@google-cloud/vision");
-const { getStorage } = require("firebase-admin/storage");
-const admin = require("firebase-admin");
+const { onCall, HttpsError } = require('firebase-functions/v2/https');
+const { ImageAnnotatorClient } = require('@google-cloud/vision');
+const { getStorage } = require('firebase-admin/storage');
+const admin = require('firebase-admin');
 
 // Initialize Vision API client
 const visionClient = new ImageAnnotatorClient({
@@ -11,94 +11,80 @@ const visionClient = new ImageAnnotatorClient({
 /**
  * Fonction Firebase pour comparer deux visages
  */
-const compareFaces = onCall(async (request) => {
-  console.log("=== Face Comparison Start ===");
-  console.log("User UID:", request.auth?.uid);
+const compareFaces = onCall(async request => {
+  console.log('=== Face Comparison Start ===');
+  console.log('User UID:', request.auth?.uid);
 
   // Vérifier l'authentification
   if (!request.auth) {
-    throw new HttpsError("unauthenticated", "Non authentifié");
+    throw new HttpsError('unauthenticated', 'Non authentifié');
   }
 
   const { documentImageUri, selfieImageUri, userId } = request.data;
 
   if (!documentImageUri || !selfieImageUri || !userId) {
-    throw new HttpsError("invalid-argument", "Paramètres manquants");
+    throw new HttpsError('invalid-argument', 'Paramètres manquants');
   }
 
   try {
     const bucket = getStorage().bucket();
 
     // Télécharger les deux images
-    console.log("Téléchargement des images...");
-    console.log("Document URI:", documentImageUri);
-    console.log("Selfie URI:", selfieImageUri);
+    console.log('Téléchargement des images...');
+    console.log('Document URI:', documentImageUri);
+    console.log('Selfie URI:', selfieImageUri);
 
     // Extraire les chemins depuis les URIs (support HTTP et gs://)
     let docPath, selfiePath;
 
-    if (documentImageUri.includes("gs://")) {
-      docPath = documentImageUri
-        .replace("gs://", "")
-        .replace(`${bucket.name}/`, "");
+    if (documentImageUri.includes('gs://')) {
+      docPath = documentImageUri.replace('gs://', '').replace(`${bucket.name}/`, '');
     } else if (
-      documentImageUri.includes("firebasestorage.googleapis.com") ||
-      documentImageUri.includes("firebasestorage.app")
+      documentImageUri.includes('firebasestorage.googleapis.com') ||
+      documentImageUri.includes('firebasestorage.app')
     ) {
       // Extraire le chemin depuis l'URL HTTP Firebase Storage
       const docUrl = new URL(documentImageUri);
-      docPath = decodeURIComponent(
-        docUrl.pathname.split("/o/")[1].split("?")[0]
-      );
+      docPath = decodeURIComponent(docUrl.pathname.split('/o/')[1].split('?')[0]);
     } else {
       docPath = documentImageUri;
     }
 
-    if (selfieImageUri.includes("gs://")) {
-      selfiePath = selfieImageUri
-        .replace("gs://", "")
-        .replace(`${bucket.name}/`, "");
+    if (selfieImageUri.includes('gs://')) {
+      selfiePath = selfieImageUri.replace('gs://', '').replace(`${bucket.name}/`, '');
     } else if (
-      selfieImageUri.includes("firebasestorage.googleapis.com") ||
-      selfieImageUri.includes("firebasestorage.app")
+      selfieImageUri.includes('firebasestorage.googleapis.com') ||
+      selfieImageUri.includes('firebasestorage.app')
     ) {
       // Extraire le chemin depuis l'URL HTTP Firebase Storage
       const selfieUrl = new URL(selfieImageUri);
-      selfiePath = decodeURIComponent(
-        selfieUrl.pathname.split("/o/")[1].split("?")[0]
-      );
+      selfiePath = decodeURIComponent(selfieUrl.pathname.split('/o/')[1].split('?')[0]);
     } else {
       selfiePath = selfieImageUri;
     }
 
-    console.log("Chemins extraits - Document:", docPath, "Selfie:", selfiePath);
+    console.log('Chemins extraits - Document:', docPath, 'Selfie:', selfiePath);
 
     const [docBuffer] = await bucket.file(docPath).download();
     const [selfieBuffer] = await bucket.file(selfiePath).download();
 
-    console.log(
-      "Images téléchargées, tailles:",
-      docBuffer.length,
-      selfieBuffer.length
-    );
+    console.log('Images téléchargées, tailles:', docBuffer.length, selfieBuffer.length);
 
     // Analyser les visages dans les deux images
-    console.log("Détection des visages...");
+    console.log('Détection des visages...');
 
     const [docFaceDetection] = await visionClient.faceDetection({
-      image: { content: docBuffer.toString("base64") },
+      image: { content: docBuffer.toString('base64') },
     });
 
     const [selfieFaceDetection] = await visionClient.faceDetection({
-      image: { content: selfieBuffer.toString("base64") },
+      image: { content: selfieBuffer.toString('base64') },
     });
 
     const docFaces = docFaceDetection.faceAnnotations || [];
     const selfieFaces = selfieFaceDetection.faceAnnotations || [];
 
-    console.log(
-      `Visages détectés - Document: ${docFaces.length}, Selfie: ${selfieFaces.length}`
-    );
+    console.log(`Visages détectés - Document: ${docFaces.length}, Selfie: ${selfieFaces.length}`);
 
     // Vérifier qu'il y a exactement un visage dans chaque image
     if (docFaces.length === 0) {
@@ -107,7 +93,7 @@ const compareFaces = onCall(async (request) => {
         match: false,
         confidence: 0,
         similarityScore: 0,
-        error: "Aucun visage détecté dans le document",
+        error: 'Aucun visage détecté dans le document',
         details: {
           faceDetectedInDocument: false,
           faceDetectedInSelfie: selfieFaces.length > 0,
@@ -122,7 +108,7 @@ const compareFaces = onCall(async (request) => {
         match: false,
         confidence: 0,
         similarityScore: 0,
-        error: "Aucun visage détecté dans le selfie",
+        error: 'Aucun visage détecté dans le selfie',
         details: {
           faceDetectedInDocument: true,
           faceDetectedInSelfie: false,
@@ -137,7 +123,7 @@ const compareFaces = onCall(async (request) => {
         match: false,
         confidence: 0,
         similarityScore: 0,
-        error: "Plusieurs visages détectés - un seul visage requis par image",
+        error: 'Plusieurs visages détectés - un seul visage requis par image',
         details: {
           faceDetectedInDocument: docFaces.length === 1,
           faceDetectedInSelfie: selfieFaces.length === 1,
@@ -155,9 +141,7 @@ const compareFaces = onCall(async (request) => {
     const selfieQuality = calculateFaceQuality(selfieFace);
     const averageQuality = (docQuality + selfieQuality) / 2;
 
-    console.log(
-      `Qualité des visages - Document: ${docQuality}, Selfie: ${selfieQuality}`
-    ); // Comparer les caractéristiques faciales
+    console.log(`Qualité des visages - Document: ${docQuality}, Selfie: ${selfieQuality}`); // Comparer les caractéristiques faciales
     const similarityScore = compareFaceFeatures(docFace, selfieFace);
 
     // Seuils ajustés pour photo de carte d'identité vs selfie
@@ -165,22 +149,19 @@ const compareFaces = onCall(async (request) => {
     const lowConfidenceThreshold = 0.45; // Score minimum pour un match possible
 
     // Système de décision à trois niveaux
-    let matchDecision = "uncertain";
+    let matchDecision = 'uncertain';
     let confidence = 0;
 
     if (similarityScore >= highConfidenceThreshold) {
-      matchDecision = "match";
-      confidence = Math.min(
-        0.85 + (similarityScore - highConfidenceThreshold) * 0.4,
-        0.98
-      );
+      matchDecision = 'match';
+      confidence = Math.min(0.85 + (similarityScore - highConfidenceThreshold) * 0.4, 0.98);
     } else if (similarityScore >= lowConfidenceThreshold) {
-      matchDecision = "possible_match";
+      matchDecision = 'possible_match';
       const range = highConfidenceThreshold - lowConfidenceThreshold;
       const position = (similarityScore - lowConfidenceThreshold) / range;
       confidence = 0.5 + position * 0.35; // Entre 50% et 85%
     } else {
-      matchDecision = "no_match";
+      matchDecision = 'no_match';
       confidence = Math.max(0.05, similarityScore * 0.5); // Confiance faible
     }
 
@@ -189,8 +170,7 @@ const compareFaces = onCall(async (request) => {
     confidence = Math.min(confidence + qualityBonus, 0.98);
 
     const isMatch =
-      matchDecision === "match" ||
-      (matchDecision === "possible_match" && confidence >= 0.7);
+      matchDecision === 'match' || (matchDecision === 'possible_match' && confidence >= 0.7);
 
     console.log(`=== RÉSULTAT FINAL ===`);
     console.log(`Score de similarité: ${(similarityScore * 100).toFixed(1)}%`);
@@ -217,8 +197,8 @@ const compareFaces = onCall(async (request) => {
       },
     };
   } catch (error) {
-    console.error("Erreur lors de la comparaison de visages:", error);
-    throw new HttpsError("internal", `Erreur interne: ${error.message}`);
+    console.error('Erreur lors de la comparaison de visages:', error);
+    throw new HttpsError('internal', `Erreur interne: ${error.message}`);
   }
 });
 
@@ -229,7 +209,7 @@ const compareFaces = onCall(async (request) => {
 function calculateFaceQuality(face) {
   let score = 0.3; // Score de base plus conservateur
 
-  console.log("=== Calcul de qualité du visage ===");
+  console.log('=== Calcul de qualité du visage ===');
 
   // Facteur principal : confiance de détection
   if (face.detectionConfidence) {
@@ -279,24 +259,20 @@ function calculateFaceQuality(face) {
   score += orientationBonus;
   console.log(`Bonus orientation: +${orientationBonus.toFixed(3)}`);
   if (orientationPenalties.length > 0) {
-    console.log(`Pénalités orientation: ${orientationPenalties.join(", ")}`);
+    console.log(`Pénalités orientation: ${orientationPenalties.join(', ')}`);
   }
 
   // Bonus pour les landmarks détectés (indicateur de qualité)
   if (face.landmarks && face.landmarks.length > 0) {
     const landmarkBonus = Math.min(face.landmarks.length / 30, 0.15); // Max 15% bonus
     score += landmarkBonus;
-    console.log(
-      `Landmarks détectés: ${face.landmarks.length} -> +${landmarkBonus.toFixed(
-        3
-      )}`
-    );
+    console.log(`Landmarks détectés: ${face.landmarks.length} -> +${landmarkBonus.toFixed(3)}`);
   }
 
   // Émotions détectées (indicateur de bonne qualité d'image)
   if (face.joyLikelihood || face.sorrowLikelihood || face.angerLikelihood) {
     score += 0.05; // Petit bonus si les émotions sont détectées
-    console.log("Émotions détectées -> +0.05");
+    console.log('Émotions détectées -> +0.05');
   }
 
   const finalScore = Math.min(score, 1.0);
@@ -310,7 +286,7 @@ function calculateFaceQuality(face) {
  * Optimisé pour comparer photo de carte d'identité vs selfie
  */
 function compareFaceFeatures(face1, face2) {
-  console.log("=== Début de la comparaison des caractéristiques faciales ===");
+  console.log('=== Début de la comparaison des caractéristiques faciales ===');
 
   let totalScore = 0;
   let weightSum = 0;
@@ -321,7 +297,7 @@ function compareFaceFeatures(face1, face2) {
   totalScore += baseScore * 1.0;
   weightSum += 1.0;
   scores.baseScore = baseScore;
-  console.log("Score de base (détection):", baseScore);
+  console.log('Score de base (détection):', baseScore);
 
   // 2. Comparer les ratios d'aspect des visages (plus tolérant)
   if (face1.boundingPoly && face2.boundingPoly) {
@@ -350,20 +326,16 @@ function compareFaceFeatures(face1, face2) {
 
   // 3. Comparer les landmarks faciaux (plus important)
   if (face1.landmarks && face2.landmarks) {
-    const landmarkScore = compareLandmarksImproved(
-      face1.landmarks,
-      face2.landmarks
-    );
+    const landmarkScore = compareLandmarksImproved(face1.landmarks, face2.landmarks);
     totalScore += landmarkScore * 2.0; // Poids plus important
     weightSum += 2.0;
     scores.landmarkScore = landmarkScore;
-    console.log("Score landmarks:", landmarkScore);
+    console.log('Score landmarks:', landmarkScore);
   }
 
   // 4. Analyser la confiance de détection
   if (face1.detectionConfidence && face2.detectionConfidence) {
-    const avgConfidence =
-      (face1.detectionConfidence + face2.detectionConfidence) / 2;
+    const avgConfidence = (face1.detectionConfidence + face2.detectionConfidence) / 2;
     const confidenceScore = Math.min(avgConfidence * 1.2, 1.0); // Bonus léger
     totalScore += confidenceScore * 0.8;
     weightSum += 0.8;
@@ -371,9 +343,7 @@ function compareFaceFeatures(face1, face2) {
     console.log(
       `Confiances - Face1: ${face1.detectionConfidence.toFixed(
         2
-      )}, Face2: ${face2.detectionConfidence.toFixed(
-        2
-      )}, Score: ${confidenceScore.toFixed(2)}`
+      )}, Face2: ${face2.detectionConfidence.toFixed(2)}, Score: ${confidenceScore.toFixed(2)}`
     );
   }
 
@@ -387,15 +357,13 @@ function compareFaceFeatures(face1, face2) {
     console.log(
       `Angles - Face1: ${face1.rollAngle.toFixed(
         1
-      )}°, Face2: ${face2.rollAngle.toFixed(1)}°, Score: ${angleScore.toFixed(
-        2
-      )}`
+      )}°, Face2: ${face2.rollAngle.toFixed(1)}°, Score: ${angleScore.toFixed(2)}`
     );
   }
 
   const finalScore = weightSum > 0 ? totalScore / weightSum : 0.5;
 
-  console.log("Scores détaillés:", scores);
+  console.log('Scores détaillés:', scores);
   console.log(
     `Score final: ${finalScore.toFixed(3)} (total: ${totalScore.toFixed(
       2
@@ -424,41 +392,39 @@ function calculateAspectRatio(vertices) {
 function compareLandmarksImproved(landmarks1, landmarks2) {
   if (!landmarks1 || !landmarks2) return 0.5;
 
-  console.log(
-    `Comparaison de ${landmarks1.length} vs ${landmarks2.length} landmarks`
-  );
+  console.log(`Comparaison de ${landmarks1.length} vs ${landmarks2.length} landmarks`);
 
   // Créer des maps pour accès rapide par type
   const map1 = new Map();
   const map2 = new Map();
 
-  landmarks1.forEach((lm) => map1.set(lm.type, lm));
-  landmarks2.forEach((lm) => map2.set(lm.type, lm));
+  landmarks1.forEach(lm => map1.set(lm.type, lm));
+  landmarks2.forEach(lm => map2.set(lm.type, lm));
 
   // Landmarks importants pour l'identification (eyes, nose, mouth)
   const criticalLandmarks = [
-    "LEFT_EYE",
-    "RIGHT_EYE",
-    "NOSE_TIP",
-    "NOSE_BOTTOM_CENTER",
-    "UPPER_LIP",
-    "LOWER_LIP",
-    "MOUTH_LEFT",
-    "MOUTH_RIGHT",
+    'LEFT_EYE',
+    'RIGHT_EYE',
+    'NOSE_TIP',
+    'NOSE_BOTTOM_CENTER',
+    'UPPER_LIP',
+    'LOWER_LIP',
+    'MOUTH_LEFT',
+    'MOUTH_RIGHT',
   ];
 
   // Landmarks de structure faciale
   const structuralLandmarks = [
-    "LEFT_EYE_LEFT_CORNER",
-    "LEFT_EYE_RIGHT_CORNER",
-    "RIGHT_EYE_LEFT_CORNER",
-    "RIGHT_EYE_RIGHT_CORNER",
-    "NOSE_BOTTOM_LEFT",
-    "NOSE_BOTTOM_RIGHT",
-    "MOUTH_CENTER",
-    "CHIN_GNATHION",
-    "CHIN_LEFT_GONION",
-    "CHIN_RIGHT_GONION",
+    'LEFT_EYE_LEFT_CORNER',
+    'LEFT_EYE_RIGHT_CORNER',
+    'RIGHT_EYE_LEFT_CORNER',
+    'RIGHT_EYE_RIGHT_CORNER',
+    'NOSE_BOTTOM_LEFT',
+    'NOSE_BOTTOM_RIGHT',
+    'MOUTH_CENTER',
+    'CHIN_GNATHION',
+    'CHIN_LEFT_GONION',
+    'CHIN_RIGHT_GONION',
   ];
 
   let criticalScore = 0;
@@ -503,8 +469,7 @@ function compareLandmarksImproved(landmarks1, landmarks2) {
 
   // Calculer les scores moyens
   const avgCritical = criticalCount > 0 ? criticalScore / criticalCount : 0.5;
-  const avgStructural =
-    structuralCount > 0 ? structuralScore / structuralCount : 0.5;
+  const avgStructural = structuralCount > 0 ? structuralScore / structuralCount : 0.5;
 
   // Score final pondéré (landmarks critiques plus importants)
   const finalScore = avgCritical * 0.7 + avgStructural * 0.3;
@@ -527,14 +492,10 @@ function calculateLandmarkSimilarity(pos1, pos2, allLandmarks1, allLandmarks2) {
   if (!pos1 || !pos2) return 0;
 
   // Trouver les landmarks de référence (yeux) pour normaliser
-  const leftEye1 = allLandmarks1.find((lm) => lm.type === "LEFT_EYE")?.position;
-  const rightEye1 = allLandmarks1.find(
-    (lm) => lm.type === "RIGHT_EYE"
-  )?.position;
-  const leftEye2 = allLandmarks2.find((lm) => lm.type === "LEFT_EYE")?.position;
-  const rightEye2 = allLandmarks2.find(
-    (lm) => lm.type === "RIGHT_EYE"
-  )?.position;
+  const leftEye1 = allLandmarks1.find(lm => lm.type === 'LEFT_EYE')?.position;
+  const rightEye1 = allLandmarks1.find(lm => lm.type === 'RIGHT_EYE')?.position;
+  const leftEye2 = allLandmarks2.find(lm => lm.type === 'LEFT_EYE')?.position;
+  const rightEye2 = allLandmarks2.find(lm => lm.type === 'RIGHT_EYE')?.position;
 
   if (!leftEye1 || !rightEye1 || !leftEye2 || !rightEye2) {
     // Fallback: distance simple normalisée
@@ -546,12 +507,10 @@ function calculateLandmarkSimilarity(pos1, pos2, allLandmarks1, allLandmarks2) {
 
   // Calculer les distances inter-oculaires comme référence d'échelle
   const eyeDistance1 = Math.sqrt(
-    Math.pow(rightEye1.x - leftEye1.x, 2) +
-      Math.pow(rightEye1.y - leftEye1.y, 2)
+    Math.pow(rightEye1.x - leftEye1.x, 2) + Math.pow(rightEye1.y - leftEye1.y, 2)
   );
   const eyeDistance2 = Math.sqrt(
-    Math.pow(rightEye2.x - leftEye2.x, 2) +
-      Math.pow(rightEye2.y - leftEye2.y, 2)
+    Math.pow(rightEye2.x - leftEye2.x, 2) + Math.pow(rightEye2.y - leftEye2.y, 2)
   );
 
   if (eyeDistance1 === 0 || eyeDistance2 === 0) {
@@ -583,17 +542,17 @@ function calculateLandmarkSimilarity(pos1, pos2, allLandmarks1, allLandmarks2) {
 /**
  * Fonction pour évaluer la qualité d'un selfie
  */
-const evaluateSelfieQuality = onCall(async (request) => {
-  console.log("=== Selfie Quality Evaluation Start ===");
+const evaluateSelfieQuality = onCall(async request => {
+  console.log('=== Selfie Quality Evaluation Start ===');
 
   if (!request.auth) {
-    throw new HttpsError("unauthenticated", "Non authentifié");
+    throw new HttpsError('unauthenticated', 'Non authentifié');
   }
 
   const { selfieUri } = request.data;
 
   if (!selfieUri) {
-    throw new HttpsError("invalid-argument", "URI du selfie manquant");
+    throw new HttpsError('invalid-argument', 'URI du selfie manquant');
   }
   try {
     const bucket = getStorage().bucket();
@@ -601,42 +560,38 @@ const evaluateSelfieQuality = onCall(async (request) => {
     // Extraire le chemin depuis l'URI (support HTTP et gs://)
     let selfiePath;
 
-    if (selfieUri.includes("gs://")) {
-      selfiePath = selfieUri
-        .replace("gs://", "")
-        .replace(`${bucket.name}/`, "");
+    if (selfieUri.includes('gs://')) {
+      selfiePath = selfieUri.replace('gs://', '').replace(`${bucket.name}/`, '');
     } else if (
-      selfieUri.includes("firebasestorage.googleapis.com") ||
-      selfieUri.includes("firebasestorage.app")
+      selfieUri.includes('firebasestorage.googleapis.com') ||
+      selfieUri.includes('firebasestorage.app')
     ) {
       // Extraire le chemin depuis l'URL HTTP Firebase Storage
       const selfieUrl = new URL(selfieUri);
-      selfiePath = decodeURIComponent(
-        selfieUrl.pathname.split("/o/")[1].split("?")[0]
-      );
+      selfiePath = decodeURIComponent(selfieUrl.pathname.split('/o/')[1].split('?')[0]);
     } else {
       selfiePath = selfieUri;
     }
 
-    console.log("Chemin selfie extrait:", selfiePath);
+    console.log('Chemin selfie extrait:', selfiePath);
 
     const [selfieBuffer] = await bucket.file(selfiePath).download();
 
     // Analyser le selfie
     const [faceDetection] = await visionClient.faceDetection({
-      image: { content: selfieBuffer.toString("base64") },
+      image: { content: selfieBuffer.toString('base64') },
     });
 
     const faces = faceDetection.faceAnnotations || [];
     const issues = [];
 
     if (faces.length === 0) {
-      issues.push("Aucun visage détecté");
+      issues.push('Aucun visage détecté');
       return { isGoodQuality: false, score: 0, issues };
     }
 
     if (faces.length > 1) {
-      issues.push("Plusieurs visages détectés - un seul requis");
+      issues.push('Plusieurs visages détectés - un seul requis');
     }
 
     const face = faces[0];
@@ -644,12 +599,12 @@ const evaluateSelfieQuality = onCall(async (request) => {
 
     // Vérifications supplémentaires pour les selfies
     if (face.rollAngle && Math.abs(face.rollAngle) > 20) {
-      issues.push("Visage trop incliné");
+      issues.push('Visage trop incliné');
       score *= 0.8;
     }
 
     if (face.detectionConfidence < 0.7) {
-      issues.push("Visage peu net ou mal éclairé");
+      issues.push('Visage peu net ou mal éclairé');
       score *= 0.7;
     }
 
@@ -662,7 +617,7 @@ const evaluateSelfieQuality = onCall(async (request) => {
     };
   } catch (error) {
     console.error("Erreur lors de l'évaluation du selfie:", error);
-    throw new HttpsError("internal", `Erreur interne: ${error.message}`);
+    throw new HttpsError('internal', `Erreur interne: ${error.message}`);
   }
 });
 

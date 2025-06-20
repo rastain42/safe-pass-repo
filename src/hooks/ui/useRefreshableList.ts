@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback } from 'react';
 
 export function useRefreshableList<T>(fetchData: () => Promise<T[]>) {
   const [data, setData] = useState<T[]>([]);
@@ -13,7 +13,7 @@ export function useRefreshableList<T>(fetchData: () => Promise<T[]>) {
       const fetchedData = await fetchData();
       setData(fetchedData);
     } catch (err: any) {
-      setError(err.message || "Une erreur est survenue");
+      setError(err.message || 'Une erreur est survenue');
     } finally {
       setIsRefreshing(false);
     }
@@ -26,7 +26,7 @@ export function useRefreshableList<T>(fetchData: () => Promise<T[]>) {
       const fetchedData = await fetchData();
       setData(fetchedData);
     } catch (err: any) {
-      setError(err.message || "Une erreur est survenue");
+      setError(err.message || 'Une erreur est survenue');
     } finally {
       setLoading(false);
     }

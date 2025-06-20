@@ -10,7 +10,7 @@ export default function ProfileScreen() {
   if (loading) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color="#0f0" />
+        <ActivityIndicator size='large' color='#0f0' />
       </View>
     );
   }
@@ -18,16 +18,15 @@ export default function ProfileScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.profileCard}>
-        <Text style={styles.title}>Profil</Text>        <View style={styles.infoContainer}>
+        <Text style={styles.title}>Profil</Text>{' '}
+        <View style={styles.infoContainer}>
           <Text style={styles.label}>Téléphone</Text>
           <Text style={styles.value}>{formatMissingValue(user?.phoneNumber)}</Text>
         </View>
-
         <View style={styles.infoContainer}>
           <Text style={styles.label}>Email</Text>
           <Text style={styles.value}>{formatMissingValue(userData?.email)}</Text>
         </View>
-
         <View style={styles.infoContainer}>
           <Text style={styles.label}>Nom</Text>
           <Text style={styles.value}>
@@ -41,7 +40,6 @@ export default function ProfileScreen() {
             <Text style={styles.verifiedBadge}>✅ Vérifié automatiquement</Text>
           )}
         </View>
-
         <View style={styles.infoContainer}>
           <Text style={styles.label}>Date de naissance</Text>
           <Text style={styles.value}>
@@ -51,7 +49,6 @@ export default function ProfileScreen() {
             <Text style={styles.extractedInfo}>📄 Extraite du document</Text>
           )}
         </View>
-
         {userData?.profile?.documentNumber && (
           <View style={styles.infoContainer}>
             <Text style={styles.label}>N° Document</Text>
@@ -59,51 +56,59 @@ export default function ProfileScreen() {
             <Text style={styles.extractedInfo}>📄 Extraite du document</Text>
           </View>
         )}
-
         {userData?.profile?.verification_method && (
           <View style={styles.infoContainer}>
             <Text style={styles.label}>Méthode de vérification</Text>
             <Text style={styles.value}>
               {userData.profile.verification_method === 'automatic'
                 ? '🤖 Vérification automatique'
-                : '👨‍💼 Vérification manuelle'
-              }
+                : '👨‍💼 Vérification manuelle'}
             </Text>
             {userData?.profile?.verification_date && (
               <Text style={styles.extractedInfo}>
-                📅 {new Date(userData.profile.verification_date.seconds * 1000).toLocaleDateString('fr-FR')}
+                📅{' '}
+                {new Date(userData.profile.verification_date.seconds * 1000).toLocaleDateString(
+                  'fr-FR'
+                )}
               </Text>
             )}
-          </View>)}
-
+          </View>
+        )}
         <View style={styles.infoContainer}>
           <Text style={styles.label}>Rôle</Text>
           <Text style={styles.value}>{formatMissingValue(userData?.role)}</Text>
         </View>
-
         <View style={styles.verificationSection}>
           <View style={styles.verificationStatus}>
             <FontAwesome
-              name={userData?.verification?.verification_status === 'auto_approved' || userData?.profile?.verified ? "check-circle" : "exclamation-circle"}
+              name={
+                userData?.verification?.verification_status === 'auto_approved' ||
+                userData?.profile?.verified
+                  ? 'check-circle'
+                  : 'exclamation-circle'
+              }
               size={24}
-              color={userData?.verification?.verification_status === 'auto_approved' || userData?.profile?.verified ? "#0f0" : "#ff9800"}
+              color={
+                userData?.verification?.verification_status === 'auto_approved' ||
+                userData?.profile?.verified
+                  ? '#0f0'
+                  : '#ff9800'
+              }
             />
             <Text style={styles.verificationText}>
               {userData?.verification?.verification_status === 'auto_approved'
-                ? "Identité vérifiée automatiquement"
+                ? 'Identité vérifiée automatiquement'
                 : userData?.profile?.verified
-                  ? "Identité vérifiée"
+                  ? 'Identité vérifiée'
                   : userData?.verification?.verification_status === 'pending'
-                    ? "Vérification en cours"
-                    : "Identité non vérifiée"}
+                    ? 'Vérification en cours'
+                    : 'Identité non vérifiée'}
             </Text>
           </View>
 
-          {(!userData?.verification?.verification_status || userData?.verification?.verification_status === 'rejected') && (
-            <TouchableOpacity
-              style={styles.verifyButton}
-              onPress={handleVerifyIdentity}
-            >
+          {(!userData?.verification?.verification_status ||
+            userData?.verification?.verification_status === 'rejected') && (
+            <TouchableOpacity style={styles.verifyButton} onPress={handleVerifyIdentity}>
               <Text style={styles.verifyButtonText}>Vérifier mon identité</Text>
             </TouchableOpacity>
           )}
@@ -111,17 +116,13 @@ export default function ProfileScreen() {
           {userData?.verification?.verification_status === 'pending' && (
             <View style={styles.pendingInfo}>
               <Text style={styles.pendingText}>
-                📋 Votre demande est en cours d'examen par nos équipes.
-                Vous recevrez une notification sous 24-48h.
+                📋 Votre demande est en cours d'examen par nos équipes. Vous recevrez une
+                notification sous 24-48h.
               </Text>
             </View>
           )}
         </View>
-
-        <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={handleLogout}
-        >
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutText}>Se déconnecter</Text>
         </TouchableOpacity>
       </View>
@@ -158,7 +159,8 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: 14,
     marginBottom: 4,
-  }, value: {
+  },
+  value: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '500',
@@ -168,7 +170,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
     marginTop: 2,
-  }, extractedInfo: {
+  },
+  extractedInfo: {
     color: '#888',
     fontSize: 12,
     fontStyle: 'italic',

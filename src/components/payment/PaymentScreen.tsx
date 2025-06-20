@@ -1,7 +1,7 @@
-import React from "react";
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from "react-native";
-import { CardField } from "@stripe/stripe-react-native";
-import { usePayment } from "@/hooks/payment/usePayment";
+import React from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { CardField } from '@stripe/stripe-react-native';
+import { usePayment } from '@/hooks/payment/usePayment';
 
 interface PaymentScreenProps {
   eventId: string;
@@ -37,7 +37,7 @@ export default function PaymentScreen({
       <View style={styles.eventDetails}>
         <Text style={styles.eventName}>{eventName}</Text>
         <Text style={styles.ticketsText}>
-          {tickets.map((t) => `${t.quantity}x ${t.name}`).join(", ")}
+          {tickets.map(t => `${t.quantity}x ${t.name}`).join(', ')}
         </Text>
       </View>
 
@@ -46,22 +46,22 @@ export default function PaymentScreen({
         <CardField
           postalCodeEnabled={false}
           placeholders={{
-            number: "4242 4242 4242 4242",
+            number: '4242 4242 4242 4242',
           }}
           cardStyle={{
-            backgroundColor: "#222222",
-            textColor: "#FFFFFF",
-            placeholderColor: "#888888",
+            backgroundColor: '#222222',
+            textColor: '#FFFFFF',
+            placeholderColor: '#888888',
             borderWidth: 1,
-            borderColor: "#333333",
+            borderColor: '#333333',
             borderRadius: 8,
           }}
           style={{
-            width: "100%",
+            width: '100%',
             height: 50,
             marginVertical: 10,
           }}
-          onCardChange={(cardDetails) => setCardComplete(cardDetails.complete)}
+          onCardChange={cardDetails => setCardComplete(cardDetails.complete)}
         />
         <Text style={styles.cardInfo}>
           Pour tester, utilisez : 4242 4242 4242 4242, date future, CVC 123
@@ -74,7 +74,7 @@ export default function PaymentScreen({
         disabled={!isFormComplete() || loading}
       >
         {loading ? (
-          <ActivityIndicator color="#000" size="small" />
+          <ActivityIndicator color='#000' size='small' />
         ) : (
           <Text style={styles.payButtonText}>Payer {totalAmount} €</Text>
         )}
@@ -90,40 +90,40 @@ export default function PaymentScreen({
 const styles = StyleSheet.create({
   container: {
     padding: 24,
-    backgroundColor: "#111",
+    backgroundColor: '#111',
     borderRadius: 12,
-    width: "100%",
+    width: '100%',
     maxWidth: 400,
   },
   title: {
     fontSize: 24,
-    fontWeight: "bold",
-    color: "#fff",
+    fontWeight: 'bold',
+    color: '#fff',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 18,
-    color: "#0f0",
+    color: '#0f0',
     marginBottom: 24,
   },
   eventDetails: {
     marginBottom: 24,
     padding: 12,
-    backgroundColor: "#0a0f0d",
+    backgroundColor: '#0a0f0d',
     borderRadius: 8,
   },
   eventName: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#fff",
+    fontWeight: 'bold',
+    color: '#fff',
     marginBottom: 4,
   },
   ticketsText: {
     fontSize: 14,
-    color: "#aaa",
+    color: '#aaa',
   },
   cardLabel: {
-    color: "#fff",
+    color: '#fff',
     marginBottom: 8,
     fontSize: 16,
   },
@@ -131,32 +131,32 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   cardInfo: {
-    color: "#888",
+    color: '#888',
     fontSize: 12,
     marginTop: 8,
   },
   payButton: {
-    backgroundColor: "#0f0",
+    backgroundColor: '#0f0',
     padding: 16,
     borderRadius: 8,
-    alignItems: "center",
+    alignItems: 'center',
     marginBottom: 12,
   },
   disabledButton: {
-    backgroundColor: "#0a7a0a",
+    backgroundColor: '#0a7a0a',
     opacity: 0.7,
   },
   payButtonText: {
-    color: "#000",
+    color: '#000',
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   cancelButton: {
     padding: 12,
-    alignItems: "center",
+    alignItems: 'center',
   },
   cancelButtonText: {
-    color: "#888",
+    color: '#888',
     fontSize: 14,
   },
 });

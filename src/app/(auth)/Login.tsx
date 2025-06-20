@@ -1,5 +1,12 @@
 import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeFirebaseRecaptcha } from '@/components/auth/SafeFirebaseRecaptcha';
 import { firebaseConfig } from '@/config/firebase';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -18,9 +25,10 @@ export default function LoginScreen() {
     error,
     loading,
     recaptchaVerifier,
-    handleSendVerificationCode, handleVerifyCode,
+    handleSendVerificationCode,
+    handleVerifyCode,
     handleLogin,
-    reset
+    reset,
   } = useAuth();
   return (
     <View style={styles.container}>
@@ -29,8 +37,8 @@ export default function LoginScreen() {
         ref={recaptchaVerifier}
         firebaseConfig={firebaseConfig}
         attemptInvisibleVerification={true}
-        title="Vérification reCAPTCHA"
-        cancelLabel="Annuler"
+        title='Vérification reCAPTCHA'
+        cancelLabel='Annuler'
       />
       <View style={styles.formContainer}>
         {!isCodeSent ? (
@@ -39,13 +47,13 @@ export default function LoginScreen() {
             <Text style={styles.label}>Numéro de téléphone</Text>
             <TextInput
               style={styles.input}
-              placeholder="Ex: 0612345678"
-              placeholderTextColor="#888"
+              placeholder='Ex: 0612345678'
+              placeholderTextColor='#888'
               value={phoneNumber}
               onChangeText={setPhoneNumber}
-              keyboardType="phone-pad"
+              keyboardType='phone-pad'
               editable={!loading}
-              autoComplete="tel"
+              autoComplete='tel'
             />
             <TouchableOpacity
               style={[styles.button, loading && styles.disabledButton]}
@@ -53,7 +61,7 @@ export default function LoginScreen() {
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator color="#000" />
+                <ActivityIndicator color='#000' />
               ) : (
                 <Text style={styles.buttonText}>Envoyer le code</Text>
               )}
@@ -65,14 +73,14 @@ export default function LoginScreen() {
             <Text style={styles.label}>Code de vérification</Text>
             <TextInput
               style={styles.input}
-              placeholder="Entrez le code reçu par SMS"
-              placeholderTextColor="#888"
+              placeholder='Entrez le code reçu par SMS'
+              placeholderTextColor='#888'
               value={verificationCode}
               onChangeText={setVerificationCode}
-              keyboardType="number-pad"
+              keyboardType='number-pad'
               maxLength={6}
               editable={!loading}
-              autoComplete="sms-otp"
+              autoComplete='sms-otp'
             />
             <TouchableOpacity
               style={[styles.button, loading && styles.disabledButton]}
@@ -80,16 +88,12 @@ export default function LoginScreen() {
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator color="#000" />
+                <ActivityIndicator color='#000' />
               ) : (
                 <Text style={styles.buttonText}>Vérifier le code</Text>
               )}
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.linkButton}
-              onPress={reset}
-              disabled={loading}
-            >
+            <TouchableOpacity style={styles.linkButton} onPress={reset} disabled={loading}>
               <Text style={[styles.linkText, loading && styles.disabledText]}>
                 Modifier le numéro
               </Text>
@@ -101,13 +105,13 @@ export default function LoginScreen() {
             <Text style={styles.label}>Mot de passe</Text>
             <TextInput
               style={styles.input}
-              placeholder="Entrez votre mot de passe"
-              placeholderTextColor="#888"
+              placeholder='Entrez votre mot de passe'
+              placeholderTextColor='#888'
               value={password}
               onChangeText={setPassword}
               secureTextEntry
               editable={!loading}
-              autoComplete="password"
+              autoComplete='password'
             />
             <TouchableOpacity
               style={[styles.button, loading && styles.disabledButton]}
@@ -115,7 +119,7 @@ export default function LoginScreen() {
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator color="#000" />
+                <ActivityIndicator color='#000' />
               ) : (
                 <Text style={styles.buttonText}>Se connecter</Text>
               )}
@@ -133,11 +137,8 @@ export default function LoginScreen() {
 
         {error && <Text style={styles.errorText}>{error}</Text>}
 
-        {error && error.includes("pas enregistré") && (
-          <TouchableOpacity
-            style={styles.linkButton}
-            onPress={navigateToRegister}
-          >
+        {error && error.includes('pas enregistré') && (
+          <TouchableOpacity style={styles.linkButton} onPress={navigateToRegister}>
             <Text style={styles.linkText}>S'inscrire maintenant</Text>
           </TouchableOpacity>
         )}
