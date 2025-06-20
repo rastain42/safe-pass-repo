@@ -2,7 +2,16 @@
  * Valide un email
  */
 export const validateEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  // Regex plus stricte qui autorise les caractères courants mais pas les points consécutifs
+  const emailRegex =
+    /^[a-zA-Z0-9]([a-zA-Z0-9._+-]*[a-zA-Z0-9])?@[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/;
+
+  // Vérifications supplémentaires
+  if (!email || email.length === 0) return false;
+  if (email.includes('..')) return false; // Pas de points consécutifs
+  if (email.startsWith('.') || email.endsWith('.')) return false; // Pas de point au début/fin
+  if (email.includes(' ')) return false; // Pas d'espaces
+
   return emailRegex.test(email);
 };
 

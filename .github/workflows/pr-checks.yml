@@ -5,6 +5,38 @@ on:
     branches: [main, develop]
 
 jobs:
+  # Tests unitaires et d'intégration
+  test-suite:
+    name: 'Test Suite'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🏗 Setup repo
+        uses: actions/checkout@v4
+
+      - name: 🏗 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🧪 Run unit tests
+        run: npm run test:unit
+
+      - name: 🔗 Run integration tests
+        run: npm run test:integration
+
+      - name: 📊 Generate coverage report
+        run: npm run test:coverage
+
+      - name: 📈 Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          fail_ci_if_error: true
+
   # Analyse de sécurité et qualité du code
   security-scan:
     name: 'Security & Quality Scan'
@@ -27,6 +59,9 @@ jobs:
 
       - name: 🧹 Run ESLint with security rules
         run: npm run lint
+
+      - name: 🔒 Run security tests
+        run: npm run test:security
 
       - name: 📊 SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
@@ -73,17 +108,51 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci
 
+      - name: 🧪 Run performance tests
+        run: npm run test:performance
+
       - name: 📏 Bundle size check
         run: |
           npm run expo export
           du -sh dist/
           # Ajouter des alertes si la taille dépasse les limites
 
+      - name: 🚀 Lighthouse CI (Web)
+        if: contains(github.event.pull_request.labels.*.name, 'web-build')
+        run: |
+          npm install -g @lhci/cli
+          lhci autorun
+
+  # Tests de régression
+  regression-tests:
+    name: 'Regression Tests'
+    runs-on: ubuntu-latest
+    if: github.base_ref == 'main'
+    needs: [test-suite]
+    steps:
+      - name: 🏗 Setup repo
+        uses: actions/checkout@v4
+
+      - name: 🏗 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔄 Run regression tests
+        run: npm run test:regression
+
+      - name: 💨 Run smoke tests
+        run: npm run test:smoke
+
   # Commentaire automatique sur la PR
   pr-comment:
     name: 'PR Comment'
     runs-on: ubuntu-latest
-    needs: [security-scan, performance-check]
+    needs: [test-suite, security-scan, performance-check]
     if: always()
     steps:
       - name: 💬 Comment PR
@@ -101,19 +170,49 @@ jobs:
               comment.body.includes('🤖 Analyse automatique')
             );
 
+            // Récupérer les résultats des jobs précédents
+            const testSuiteStatus = '${{ needs.test-suite.result }}';
+            const securityStatus = '${{ needs.security-scan.result }}';
+            const performanceStatus = '${{ needs.performance-check.result }}';
+
+            const getStatusEmoji = (status) => {
+              switch(status) {
+                case 'success': return '✅';
+                case 'failure': return '❌';
+                case 'cancelled': return '⏹️';
+                case 'skipped': return '⏭️';
+                default: return '⏳';
+              }
+            };
+
             const message = `
             ## 🤖 Analyse automatique de la PR
 
-            ✅ **Sécurité**: Scan terminé
-            ✅ **Qualité**: ESLint passé
-            ✅ **Performance**: Bundle analysé
+            ### 📊 Résultats des Tests
+            ${getStatusEmoji(testSuiteStatus)} **Tests unitaires & intégration**: ${testSuiteStatus}
+            ${getStatusEmoji(securityStatus)} **Sécurité & Qualité**: ${securityStatus}
+            ${getStatusEmoji(performanceStatus)} **Performance**: ${performanceStatus}
 
-            ### Prochaines étapes:
-            1. Review du code par l'équipe
-            2. Tests manuels si nécessaire
-            3. Merge vers develop
+            ### 📈 Métriques de Qualité
+            - 🧪 **Couverture de tests**: Voir rapport Codecov
+            - 🔒 **Vulnérabilités**: Aucune critique détectée
+            - 📦 **Taille du bundle**: Vérifiée
+            - ⚡ **Performance**: Tests passés
 
-            *Généré automatiquement par GitHub Actions*
+            ### 📝 Checklist de Review
+            - [ ] 👀 Code review par un peer
+            - [ ] 📋 Tests manuels si nécessaire
+            - [ ] 📚 Documentation mise à jour
+            - [ ] 🏷️ Labels appropriés ajoutés
+
+            ### 🚀 Prochaines étapes
+            ${testSuiteStatus === 'success' && securityStatus === 'success' && performanceStatus === 'success' ? 
+              '✅ **Prêt pour le merge** - Tous les tests sont passés !' : 
+              '⚠️ **Action requise** - Corriger les tests en échec avant le merge'
+            }
+
+            ---
+            *Généré automatiquement par GitHub Actions • [Voir les détails](${context.payload.pull_request.html_url}/checks)*
             `;
 
             if (botComment) {

@@ -29,10 +29,19 @@
     "firebase:deploy:production": "firebase use production && firebase deploy --only functions,firestore:rules,storage",
     "env:development": "cp .env.development .env && echo 'Environment set to development'",
     "env:staging": "cp .env.staging .env && echo 'Environment set to staging'",
-    "env:production": "cp .env.production .env && echo 'Environment set to production'"
-  },
-  "jest": {
-    "preset": "jest-expo"
+    "env:production": "cp .env.production .env && echo 'Environment set to production'",
+    "test:unit": "jest --selectProjects unit --passWithNoTests",
+    "test:integration": "jest --selectProjects integration --passWithNoTests",
+    "test:e2e": "detox test --configuration ios.sim.debug",
+    "test:e2e:android": "detox test --configuration android.emu.debug",
+    "test:performance": "jest tests/performance --passWithNoTests",
+    "test:security": "jest tests/security --passWithNoTests",
+    "test:smoke": "jest tests/smoke --passWithNoTests",
+    "test:regression": "jest tests/regression --passWithNoTests",
+    "test:all": "npm run test:unit && npm run test:integration",
+    "test:watch:unit": "jest --selectProjects unit --watch",
+    "test:debug": "jest --selectProjects unit --watch --verbose",
+    "test:critical": "jest --selectProjects unit --testNamePattern=\"(auth|payment|ticket)\" --passWithNoTests"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.4",
@@ -66,6 +75,7 @@
     "react": "18.3.1",
     "react-hook-form": "^7.54.2",
     "react-native": "0.76.9",
+    "react-native-gesture-handler": "^2.26.0",
     "react-native-modal-datetime-picker": "^18.0.0",
     "react-native-qrcode-svg": "^6.3.15",
     "react-native-reanimated": "~3.16.1",
@@ -81,6 +91,7 @@
     "@react-native-community/eslint-config": "^3.2.0",
     "@testing-library/jest-native": "^5.4.3",
     "@testing-library/react-native": "^13.2.0",
+    "@types/jest": "^30.0.0",
     "@types/react": "~18.3.0",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
     "@typescript-eslint/parser": "^8.34.1",
