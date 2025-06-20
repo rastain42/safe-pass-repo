@@ -11,17 +11,46 @@ import { compareFaces, type BiometricComparisonResult } from '@/services/auth/bi
 import { cleanupSelfieAfterVerification } from '@/services/shared/privacy.service';
 import { cleanupAllUserTempFiles } from '@/services/shared/cleanup.service';
 import MRZValidationDisplay from '@/components/identity/MRZValidationDisplay';
+import { useDataReconciliation } from '@/hooks/identity/useDataReconciliation';
+import DataReconciliationModal from '@/components/identity/DataReconciliationModal';
+import { IdentityData } from '@/types/user';
 
 export default function VerifyIdentityScreen() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [analyzing, setAnalyzing] = useState(false);
-  const [idFront, setIdFront] = useState<string | null>(null); const [selfie, setSelfie] = useState<string | null>(null);
+  const [analyzing, setAnalyzing] = useState(false); const [idFront, setIdFront] = useState<string | null>(null);
+  const [selfie, setSelfie] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [analysisResult, setAnalysisResult] = useState<DocumentAnalysisResult | null>(null);
   const [biometricResult, setBiometricResult] = useState<BiometricComparisonResult | null>(null);
   const [comparingFaces, setComparingFaces] = useState(false);
+
+  // Données utilisateur initiales (à récupérer depuis le profil utilisateur)
+  const initialData: IdentityData = {
+    firstName: 'Rom', // TODO: récupérer depuis le profil utilisateur
+    lastName: 'Mich',
+    birthDate: '14/12/2002'
+  };
+
+  const {
+    isProcessing,
+    showReconciliationModal,
+    reconciliation,
+    idData,
+    processVerification,
+    handleReconciliationChoice,
+    closeReconciliationModal,
+  } = useDataReconciliation(
+    auth.currentUser?.uid || '',
+    initialData,
+    (success) => {
+      if (success) {
+        router.push('/(tabs)/Profile');
+      }
+    }
+  );
+
   const pickImage = async (setter: (value: string | null) => void, isSelfie: boolean = false) => {
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -236,10 +265,9 @@ export default function VerifyIdentityScreen() {
       setComparingFaces(false);
     }
   };
-
   const handleSubmit = async () => {
-    if (!idFront || !auth.currentUser) {
-      Alert.alert('Erreur', 'Veuillez au minimum prendre une photo de votre pièce d\'identité');
+    if (!idFront || !auth.currentUser || !analysisResult) {
+      Alert.alert('Erreur', 'Veuillez au minimum prendre une photo de votre pièce d\'identité et attendre l\'analyse');
       return;
     }
 
@@ -247,7 +275,9 @@ export default function VerifyIdentityScreen() {
 
     try {
       const userId = auth.currentUser.uid;
-      const timestamp = Date.now();      // Upload des images finales
+      const timestamp = Date.now();
+
+      // Upload des images finales
       const idFrontURL = await uploadImage(
         idFront,
         `verifications/${userId}/id_front_${timestamp}.jpg`
@@ -260,139 +290,79 @@ export default function VerifyIdentityScreen() {
           selfie,
           `verifications/${userId}/selfie_${timestamp}.jpg`
         );
-      }      // Déterminer le statut basé sur l'analyse et la biométrie
-      let isAutoApproved = false;
-
-      // Vérification automatique si :
-      // 1. Analyse du document réussie avec bonne confiance
-      // 2. ET comparaison biométrique réussie (si selfie fourni)
-      if (analysisResult?.success && analysisResult.confidence > 0.8) {
-        if (selfie && biometricResult) {
-          // Si selfie fourni, vérifier la biométrie
-          isAutoApproved = biometricResult.success && biometricResult.match && biometricResult.confidence > 0.7;
-        } else {
-          // Pas de selfie, approval basé uniquement sur l'analyse du document
-          isAutoApproved = true;
-        }
-      } const verificationStatus = isAutoApproved ? 'auto_approved' : 'pending';
-
-      // Préparer les informations du profil extraites du document
-      const extractedUserInfo: {
-        firstName?: string;
-        lastName?: string;
-        birthDate?: string;
-        documentNumber?: string;
-        mrzData?: any;
-      } = {};
-
-      if (analysisResult?.success && analysisResult.data) {
-        if (analysisResult.data.firstName?.value) {
-          extractedUserInfo.firstName = String(analysisResult.data.firstName.value);
-        }
-        if (analysisResult.data.lastName?.value) {
-          extractedUserInfo.lastName = String(analysisResult.data.lastName.value);
-        }
-        if (analysisResult.data.birthDate?.value) {
-          extractedUserInfo.birthDate = String(analysisResult.data.birthDate.value);
-        }
-        if (analysisResult.data.documentNumber?.value) {
-          extractedUserInfo.documentNumber = String(analysisResult.data.documentNumber.value);
-        }
-        // Ajouter les informations MRZ si disponibles
-        if ((analysisResult as any).mrzData) {
-          extractedUserInfo.mrzData = (analysisResult as any).mrzData;
-        }
       }
 
-      // Mise à jour complète du profil utilisateur
-      const updateData: any = {
-        verification_status: verificationStatus,
-        verification_documents: {
-          id_front: idFrontURL,
-          selfie: selfieURL, // Peut être null
-          submitted_at: serverTimestamp(),
-          analysis_result: analysisResult || null,
-          biometric_result: biometricResult || null,
-          auto_approved: isAutoApproved,
-        }
+      // Préparer les documents de vérification
+      const verificationDocuments = {
+        id_front: idFrontURL,
+        selfie: selfieURL,
+        submitted_at: new Date(),
       };
 
-      // Si vérification automatique approuvée, mettre à jour le profil avec les informations extraites
-      if (isAutoApproved && Object.keys(extractedUserInfo).length > 0) {
-        updateData.profile = {
-          ...extractedUserInfo,
-          verified: true,
-          verification_date: serverTimestamp(),
-          verification_method: 'automatic'
-        };
+      // Convertir l'analysisResult en format compatible avec notre nouveau système
+      const compatibleAnalysisResult = {
+        success: analysisResult.success,
+        confidence: analysisResult.confidence,
+        auto_approved: analysisResult.success && analysisResult.confidence > 0.8,
+        data: {
+          firstName: {
+            value: analysisResult.data?.firstName?.value || '',
+            confidence: analysisResult.data?.firstName?.confidence || 0,
+          },
+          lastName: {
+            value: analysisResult.data?.lastName?.value || '',
+            confidence: analysisResult.data?.lastName?.confidence || 0,
+          },
+          birthDate: {
+            value: analysisResult.data?.birthDate?.value || '',
+            confidence: analysisResult.data?.birthDate?.confidence || 0,
+          },
+          code: {
+            value: analysisResult.data?.documentNumber?.value || '',
+            confidence: analysisResult.data?.documentNumber?.confidence || 0,
+          },
+        },
+        debugInfo: {
+          entitiesFound: 4,
+          formFieldsFound: 0,
+          hasRawText: true,
+          processorType: 'custom_extractor',
+        },
+        biometric_result: biometricResult ? {
+          match: biometricResult.match,
+          confidence: biometricResult.confidence,
+          similarityScore: biometricResult.confidence,
+          success: biometricResult.success,
+          details: {
+            faceDetectedInDocument: true,
+            faceDetectedInSelfie: true,
+            matchDecision: biometricResult.match ? 'match' : 'no_match',
+            qualityScore: 1,
+            thresholds: {
+              high: 0.65,
+              low: 0.45,
+            },
+          },
+        } : undefined,
+      };
 
-        console.log('Mise à jour du profil avec les informations extraites:', extractedUserInfo);
-      }
-
-      await updateDoc(doc(db, 'users', userId), updateData);
-
-      // Si vérification automatique approuvée et selfie fourni, programmer sa suppression
-      if (isAutoApproved && selfieURL) {
-        // Programmer la suppression du selfie après 7 jours pour conformité RGPD
-        setTimeout(async () => {
-          try {
-            console.log('Suppression programmée du selfie après vérification réussie (RGPD)');
-            const storage = getStorage();
-            const selfieRef = ref(storage, selfieURL);
-            await deleteObject(selfieRef);
-
-            // Mettre à jour la base de données pour supprimer la référence
-            await updateDoc(doc(db, 'users', userId), {
-              'verification_documents.selfie': null,
-              'verification_documents.selfie_deleted_at': serverTimestamp(),
-              'verification_documents.selfie_deletion_reason': 'auto_cleanup_post_verification'
-            });
-
-            console.log('Selfie supprimé automatiquement après vérification');
-          } catch (cleanupError) {
-            console.warn('Erreur lors de la suppression automatique du selfie:', cleanupError);
-          }
-        }, 7 * 24 * 60 * 60 * 1000); // 7 jours
-      } const message = isAutoApproved
-        ? 'Félicitations ! Votre identité a été vérifiée automatiquement grâce à notre système d\'analyse avancé. Votre compte est maintenant vérifié.'
-        : 'Votre demande de vérification a été envoyée avec succès. Nos équipes vont examiner votre document et vous informer du résultat sous 24-48h.'; const title = isAutoApproved ? 'Vérification approuvée ✅' : 'Demande envoyée 📋';      // Nettoyer les images temporaires et selfies après traitement
-      try {
-        console.log('Nettoyage des images temporaires...');
-
-        // Nettoyer tous les fichiers temporaires de l'utilisateur
-        await cleanupAllUserTempFiles(userId);
-
-        console.log('Images temporaires nettoyées avec succès');
-      } catch (cleanupError) {
-        console.warn('Erreur lors du nettoyage des images temporaires:', cleanupError);
-        // Ne pas faire échouer le processus à cause du nettoyage
-      }
-
-      // Message personnalisé avec les informations extraites si disponibles
-      let personalizedMessage = message;
-      if (isAutoApproved && Object.keys(extractedUserInfo).length > 0) {
-        const extractedInfo = [];
-        if (extractedUserInfo.firstName) extractedInfo.push(`Prénom: ${extractedUserInfo.firstName}`);
-        if (extractedUserInfo.lastName) extractedInfo.push(`Nom: ${extractedUserInfo.lastName}`);
-        if (extractedUserInfo.birthDate) extractedInfo.push(`Naissance: ${extractedUserInfo.birthDate}`);
-
-        if (extractedInfo.length > 0) {
-          personalizedMessage += `\n\nInformations détectées:\n${extractedInfo.join('\n')}`;
-        }
-      }
-
-      // Si vérification automatique approuvée et selfie fourni, le supprimer après 7 jours
-      if (isAutoApproved && selfie) {
-        setTimeout(() => {
-          cleanupSelfieAfterVerification(userId);
-        }, 7 * 24 * 60 * 60 * 1000); // 7 jours
-      }
-
-      Alert.alert(
-        title,
-        personalizedMessage,
-        [{ text: 'Parfait !', onPress: () => router.replace('/(tabs)/Profile') }]
+      // Utiliser le nouveau système de vérification avec réconciliation
+      const success = await processVerification(
+        userId,
+        compatibleAnalysisResult,
+        verificationDocuments
       );
+
+      if (!success) {
+        throw new Error('Échec du processus de vérification');
+      }
+
+      // Nettoyer les images temporaires
+      try {
+        await cleanupAllUserTempFiles(userId);
+      } catch (cleanupError) {
+        console.warn('Erreur lors du nettoyage:', cleanupError);
+      }
 
     } catch (error) {
       console.error('Erreur lors de la vérification:', error);
@@ -529,15 +499,15 @@ export default function VerifyIdentityScreen() {
   };
 
   if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0f0" />        <Text style={styles.loadingText}>
-          Envoi en cours ({(progress || 0).toFixed(0)}%)
-        </Text>
-        <Text style={styles.loadingSubText}>
-          Téléchargement de vos documents...
-        </Text>
-      </View>
+    return (<View style={styles.loadingContainer}>
+      <ActivityIndicator size="large" color="#0f0" />
+      <Text style={styles.loadingText}>
+        Envoi en cours ({(progress || 0).toFixed(0)}%)
+      </Text>
+      <Text style={styles.loadingSubText}>
+        Téléchargement de vos documents...
+      </Text>
+    </View>
     );
   }
   if (analyzing || comparingFaces) {
@@ -570,16 +540,17 @@ export default function VerifyIdentityScreen() {
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.card}>
-            <Text style={styles.title}>Vérification d'identité</Text>        <Text style={styles.subtitle}>
+        >          <View style={styles.card}>
+            <Text style={styles.title}>Vérification d'identité</Text>
+            <Text style={styles.subtitle}>
               Étape {String(step || 1)}/2 - Vérification automatique activée
-            </Text>
+            </Text>            {renderStepIndicator()}
 
-            {renderStepIndicator()}          {step === 1 && (
-              <>            <Text style={styles.instruction}>
-                📷 Prenez en photo le <Text style={styles.highlight}>recto</Text> de votre pièce d'identité
-              </Text>
+            {step === 1 && (
+              <>
+                <Text style={styles.instruction}>
+                  📷 Prenez en photo le <Text style={styles.highlight}>recto</Text> de votre pièce d'identité
+                </Text>
                 <Text style={styles.hint}>
                   L'analyse automatique démarrera après la capture pour vérifier l'authenticité du document
                 </Text>
@@ -626,10 +597,11 @@ export default function VerifyIdentityScreen() {
               <>
                 <Text style={styles.instruction}>
                   🤳 Prenez un <Text style={styles.highlight}>selfie</Text> avec votre visage clairement visible
-                </Text>
-                <Text style={styles.hint}>
+                </Text>                <Text style={styles.hint}>
                   Cette photo permettra de vérifier la correspondance avec votre pièce d'identité (optionnel)
-                </Text>                <TouchableOpacity
+                </Text>
+
+                <TouchableOpacity
                   style={styles.imageButton}
                   onPress={() => pickImage(setSelfie, true)}
                 >
@@ -697,7 +669,17 @@ export default function VerifyIdentityScreen() {
         >
           <Text style={styles.cancelButtonText}>✕ Annuler</Text>
         </TouchableOpacity>
-      </View>
+      </View>      {/* Modal de réconciliation des données */}
+      {showReconciliationModal && reconciliation && idData && (
+        <DataReconciliationModal
+          visible={showReconciliationModal}
+          reconciliation={reconciliation}
+          initialData={initialData}
+          idData={idData}
+          onChoice={handleReconciliationChoice}
+          onCancel={closeReconciliationModal}
+        />
+      )}
     </>
   );
 }

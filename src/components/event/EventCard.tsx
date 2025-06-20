@@ -57,13 +57,13 @@ const EventCard: React.FC<EventCardProps> = ({
         <View style={styles.infoRow}>
           <FontAwesome name="users" size={16} color="#0f0" />
           <Text style={styles.infoText}>{capacity} places</Text>
-        </View>
-
-        <View style={styles.descriptionContainer}>
+        </View>        <View style={styles.descriptionContainer}>
           <Text style={styles.description} numberOfLines={2}>
             {description}
           </Text>
-        </View>        <View style={styles.footer}>
+        </View>
+
+        <View style={styles.footer}>
           <View style={styles.restrictions}>
             <View style={styles.ageRestriction}>
               <FontAwesome

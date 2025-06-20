@@ -23,11 +23,9 @@ import { EventTicket } from '@/types/tickets';
 export default function EventDetailsScreen() {
     const { id } = useLocalSearchParams();
     const router = useRouter();
-    const { event, loading } = useEventDetails(id as string); const { userData } = useUserProfile();
-
-    // Vérifier si l'utilisateur peut accéder aux billets
-    const isUserVerified = userData?.verification_status === 'auto_approved' ||
-        userData?.verification_status === 'approved' ||
+    const { event, loading } = useEventDetails(id as string); const { userData } = useUserProfile();    // Vérifier si l'utilisateur peut accéder aux billets
+    const isUserVerified = userData?.verification?.verification_status === 'auto_approved' ||
+        userData?.verification?.verification_status === 'verified' ||
         userData?.profile?.verified;
 
     const canAccessTickets = event?.allowUnverifiedUsers === true || isUserVerified;
@@ -76,12 +74,11 @@ export default function EventDetailsScreen() {
             {/* Supprimer l'en-tête "Event details" */}
             <Stack.Screen options={{
                 headerShown: false
-            }} />
-
-            <ScrollView
+            }} />            <ScrollView
                 style={styles.container}
                 ref={scrollViewRef}
-            >                <Image
+            >
+                <Image
                     source={event.image ? { uri: event.image } : require('../../../assets/images/safepasslogoV1.png')}
                     style={styles.image}
                 />
@@ -104,11 +101,11 @@ export default function EventDetailsScreen() {
                     <View style={styles.infoRow}>
                         <FontAwesome name="users" size={16} color="#0f0" />
                         <Text style={styles.infoText}>{event.capacity} places</Text>
+                    </View>                    <View style={styles.descriptionContainer}>
+                        <Text style={styles.description}>{event.description}</Text>
                     </View>
 
-                    <View style={styles.descriptionContainer}>
-                        <Text style={styles.description}>{event.description}</Text>
-                    </View>                    <View style={styles.ticketsContainer}>
+                    <View style={styles.ticketsContainer}>
                         <Text style={styles.sectionTitle}>Billets disponibles</Text>
 
                         {!canAccessTickets ? (

@@ -16,14 +16,14 @@ export default function TabLayout() {
         headerShown: false,
       }}>
 
-      <Tabs.Screen
-        name="Index"
+      <Tabs.Screen name="Index"
         options={{
           title: 'Événements',
           tabBarIcon: ({ color }) =>
             <FontAwesome name="calendar" size={24} color={color} />,
         }}
-      />      <Tabs.Screen
+      />
+      <Tabs.Screen
         name="EventForm"
         options={{
           href: isOrganizer ? '/EventForm' : null,

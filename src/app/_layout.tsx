@@ -26,9 +26,8 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const { colorScheme } = useColorScheme();
   const [user, setUser] = useState<User | null>(null);
-
   const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    SpaceMono: require('../../assets/fonts/SpaceMono-Regular.ttf'),
     ...FontAwesome.font,
   });
 
@@ -42,8 +41,7 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
-  useEffect(() => {
-    // Utiliser l'instance auth de votre configuration
+  useEffect(() => {    // Utiliser l'instance auth de votre configuration
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         // Récupérer les données additionnelles enregistrées dans SecureStore si nécessaire
@@ -53,15 +51,24 @@ export default function RootLayout() {
 
         const mappedUser: User = {
           id: firebaseUser.uid,
-          role: 'user',
-          verifiedStatus: firebaseUser.emailVerified,
-          createdAt: firebaseUser.metadata.creationTime || '',
-          updatedAt: firebaseUser.metadata.lastSignInTime || '',
           email: firebaseUser.email || '',
           phone: firebaseUser.phoneNumber || '',
-          firstName,
-          lastName,
-          birthDate
+          role: 'user',
+
+          // Données initiales depuis SecureStore (migration legacy)
+          initialData: {
+            firstName,
+            lastName,
+            birthDate
+          },
+
+          // Statut de vérification basé sur l'email pour l'instant
+          verification: {
+            verification_status: firebaseUser.emailVerified ? 'verified' : 'pending',
+          },
+
+          created_at: firebaseUser.metadata.creationTime || '',
+          updated_at: firebaseUser.metadata.lastSignInTime || '',
         };
         setUser(mappedUser);
       } else {

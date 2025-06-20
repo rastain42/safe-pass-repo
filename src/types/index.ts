@@ -7,8 +7,11 @@ export * from './events';
 // Export des types de tickets
 export * from './tickets';
 
-// Export des types utilisateurs
-export interface User {
+// Export des types utilisateurs (nouvelle structure)
+export * from './user';
+
+// Types legacy pour compatibilité (à supprimer progressivement)
+export interface LegacyUser {
   id: string;
   phone: string;
   email: string;

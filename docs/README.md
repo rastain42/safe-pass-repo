@@ -45,6 +45,7 @@ Bienvenue dans la documentation complète de l'application SafePass. Cette docum
 ### 🔧 **Documentation Technique**
 
 - [Architecture](ARCHITECTURE.md) - Vue d'ensemble système
+- [Guide Configuration](CONFIG_FILES_GUIDE.md) - Organisation des fichiers de config
 - [API Reference](API.md) - Endpoints et schemas
 - [Base de Données](DATABASE.md) - Modèles de données
 - [Sécurité](SECURITY.md) - Pratiques sécurisées

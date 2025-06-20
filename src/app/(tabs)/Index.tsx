@@ -7,13 +7,13 @@ import { navigateToEventDetails } from '@/utils/navigation';
 
 export default function EventListScreen() {
   const { events, loading, refreshing, handleRefresh } = useEvents();
-
   const ListHeader = () => (
-    <View style={styles.headerContainer}>      <Image
-      source={require('../../../assets/images/safepasslogoV1.png')}
-      style={styles.logo}
-      resizeMode="contain"
-    />
+    <View style={styles.headerContainer}>
+      <Image
+        source={require('../../../assets/images/safepasslogoV1.png')}
+        style={styles.logo}
+        resizeMode="contain"
+      />
     </View>
   );
 

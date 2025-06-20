@@ -63,8 +63,8 @@ export function useTicketPurchase(event: any | null) {
     // Par défaut, si allowUnverifiedUsers n'est pas défini, on considère que la vérification est requise
     if (event.allowUnverifiedUsers !== true) {
       const isVerified =
-        userData?.verification_status === 'auto_approved' ||
-        userData?.verification_status === 'approved' ||
+        userData?.verification?.verification_status === 'auto_approved' ||
+        userData?.verification?.verification_status === 'verified' ||
         userData?.profile?.verified;
 
       if (!isVerified) {

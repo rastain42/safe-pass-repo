@@ -18,9 +18,7 @@ export default function ProfileScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.profileCard}>
-        <Text style={styles.title}>Profil</Text>
-
-        <View style={styles.infoContainer}>
+        <Text style={styles.title}>Profil</Text>        <View style={styles.infoContainer}>
           <Text style={styles.label}>Téléphone</Text>
           <Text style={styles.value}>{formatMissingValue(user?.phoneNumber)}</Text>
         </View>
@@ -28,12 +26,16 @@ export default function ProfileScreen() {
         <View style={styles.infoContainer}>
           <Text style={styles.label}>Email</Text>
           <Text style={styles.value}>{formatMissingValue(userData?.email)}</Text>
-        </View>        <View style={styles.infoContainer}>
+        </View>
+
+        <View style={styles.infoContainer}>
           <Text style={styles.label}>Nom</Text>
           <Text style={styles.value}>
             {userData?.profile?.firstName && userData?.profile?.lastName
               ? `${userData.profile.firstName} ${userData.profile.lastName}`
-              : formatFullName(userData?.firstName, userData?.lastName)}
+              : userData?.initialData
+                ? `${userData.initialData.firstName} ${userData.initialData.lastName}`
+                : 'Non renseigné'}
           </Text>
           {userData?.profile?.verified && (
             <Text style={styles.verifiedBadge}>✅ Vérifié automatiquement</Text>
@@ -43,7 +45,7 @@ export default function ProfileScreen() {
         <View style={styles.infoContainer}>
           <Text style={styles.label}>Date de naissance</Text>
           <Text style={styles.value}>
-            {userData?.profile?.birthDate || formatMissingValue(userData?.birthDate)}
+            {userData?.profile?.birthDate || userData?.initialData?.birthDate || 'Non renseignée'}
           </Text>
           {userData?.profile?.birthDate && (
             <Text style={styles.extractedInfo}>📄 Extraite du document</Text>
@@ -72,31 +74,32 @@ export default function ProfileScreen() {
                 📅 {new Date(userData.profile.verification_date.seconds * 1000).toLocaleDateString('fr-FR')}
               </Text>
             )}
-          </View>
-        )}
+          </View>        )}
 
         <View style={styles.infoContainer}>
           <Text style={styles.label}>Rôle</Text>
           <Text style={styles.value}>{formatMissingValue(userData?.role)}</Text>
-        </View>        <View style={styles.verificationSection}>
+        </View>
+
+        <View style={styles.verificationSection}>
           <View style={styles.verificationStatus}>
             <FontAwesome
-              name={userData?.verification_status === 'auto_approved' || userData?.profile?.verified ? "check-circle" : "exclamation-circle"}
+              name={userData?.verification?.verification_status === 'auto_approved' || userData?.profile?.verified ? "check-circle" : "exclamation-circle"}
               size={24}
-              color={userData?.verification_status === 'auto_approved' || userData?.profile?.verified ? "#0f0" : "#ff9800"}
+              color={userData?.verification?.verification_status === 'auto_approved' || userData?.profile?.verified ? "#0f0" : "#ff9800"}
             />
             <Text style={styles.verificationText}>
-              {userData?.verification_status === 'auto_approved'
+              {userData?.verification?.verification_status === 'auto_approved'
                 ? "Identité vérifiée automatiquement"
                 : userData?.profile?.verified
                   ? "Identité vérifiée"
-                  : userData?.verification_status === 'pending'
+                  : userData?.verification?.verification_status === 'pending'
                     ? "Vérification en cours"
                     : "Identité non vérifiée"}
             </Text>
           </View>
 
-          {(!userData?.verification_status || userData?.verification_status === 'rejected') && (
+          {(!userData?.verification?.verification_status || userData?.verification?.verification_status === 'rejected') && (
             <TouchableOpacity
               style={styles.verifyButton}
               onPress={handleVerifyIdentity}
@@ -105,7 +108,7 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           )}
 
-          {userData?.verification_status === 'pending' && (
+          {userData?.verification?.verification_status === 'pending' && (
             <View style={styles.pendingInfo}>
               <Text style={styles.pendingText}>
                 📋 Votre demande est en cours d'examen par nos équipes.
