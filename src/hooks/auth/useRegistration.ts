@@ -17,7 +17,6 @@ export function useRegistration(router: Router) {
   const [verificationId, setVerificationId] = useState('');
   const [isCodeSent, setIsCodeSent] = useState(false);
   const [showRegisterForm, setShowRegisterForm] = useState(false);
-  const [verifiedStatus, setVerifiedStatus] = useState('non_verified');
 
   // États pour le formulaire d'inscription
   const [email, setEmail] = useState('');
@@ -73,8 +72,7 @@ export function useRegistration(router: Router) {
         setError('Ce numéro de téléphone est déjà utilisé');
         return;
       }
-
-      const { verificationId: vId, formattedPhone } = await authService.sendVerificationCode(
+      const { verificationId: vId } = await authService.sendVerificationCode(
         phoneNumber,
         recaptchaVerifier.current
       );
@@ -110,13 +108,10 @@ export function useRegistration(router: Router) {
     try {
       setLoading(true);
       setError(null);
-
-      const { userId, phoneNumber: phone } = await authService.verifyCodeForRegistration(
+      const { phoneNumber: phone } = await authService.verifyCodeForRegistration(
         verificationId,
         verificationCode
       );
-
-      setVerifiedStatus('verified');
 
       // Sauvegarder le numéro de téléphone vérifié
       await authService.saveVerifiedPhone(phone || formatPhoneNumber(phoneNumber));

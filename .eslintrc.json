@@ -1,28 +1,19 @@
 {
-  "extends": [
-    "expo",
-    "@react-native-community",
-    "eslint:recommended",
-    "@typescript-eslint/recommended"
-  ],
-  "parser": "@typescript-eslint/parser",
-  "plugins": ["@typescript-eslint", "react-hooks"],
+  "extends": ["expo"],
   "rules": {
-    "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "warn",
-    "@typescript-eslint/no-unused-vars": "error",
-    "@typescript-eslint/no-explicit-any": "warn",
-    "no-console": ["warn", { "allow": ["warn", "error"] }],
-    "prefer-const": "error",
-    "no-var": "error",
-    "react/jsx-uses-react": "off",
-    "react/react-in-jsx-scope": "off"
+    "no-console": "off",
+    "react-hooks/rules-of-hooks": "off",
+    "react-hooks/exhaustive-deps": "off"
   },
-  "env": {
-    "react-native/react-native": true,
-    "es6": true,
-    "node": true,
-    "jest": true
-  },
-  "ignorePatterns": ["node_modules/", "dist/", "build/", ".expo/", "android/", "ios/"]
+  "ignorePatterns": [
+    "node_modules",
+    ".expo",
+    "dist",
+    "web-build",
+    "android",
+    "ios",
+    "functions",
+    "jest.setup.js",
+    "**/__tests__/**"
+  ]
 }

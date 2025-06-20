@@ -1,8 +1,16 @@
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '@/config/firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  setDoc,
+} from 'firebase/firestore';
+import { db, auth } from '@/config/firebase';
 import { UserTicket } from '@/types/tickets';
-import { TicketStatus, PaymentStatus } from '@/types/shared';
+import { PaymentStatus } from '@/types/shared';
 import { getCurrentUser } from '../users/user.service';
 
 /**
@@ -152,8 +160,6 @@ export const getTicketDetails = async (ticketId: string): Promise<UserTicket | n
   // ...
   return null;
 };
-import { setDoc } from 'firebase/firestore';
-import { auth } from '@/config/firebase';
 
 /**
  * Crée un ticket utilisateur après un achat
@@ -219,7 +225,6 @@ export const createTicketsForPurchase = async (
       throw new Error('User not authenticated');
     }
 
-    const userTicketsRef = collection(db, 'user_tickets');
     let purchasedTickets: string[] = [];
     let firstEventName = '';
     let firstTicketName = '';

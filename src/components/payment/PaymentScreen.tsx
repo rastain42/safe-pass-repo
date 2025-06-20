@@ -6,12 +6,12 @@ import { usePayment } from "@/hooks/payment/usePayment";
 interface PaymentScreenProps {
   eventId: string;
   eventName: string;
-  tickets: Array<{
+  tickets: {
     id: string;
     name: string;
     price: number;
     quantity: number;
-  }>;
+  }[];
   totalAmount: number;
   onCancel: () => void;
   onSuccess: (paymentIntentId: string) => void;

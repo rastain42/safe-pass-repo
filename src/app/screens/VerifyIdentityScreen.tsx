@@ -3,12 +3,10 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Ale
 import { Stack, useRouter } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db } from '@/config/firebase';
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { auth } from '@/config/firebase';
 import { analyzeIdDocument, type DocumentAnalysisResult } from '@/services/identity/document.service';
 import { compareFaces, type BiometricComparisonResult } from '@/services/auth/biometric.service';
-import { cleanupSelfieAfterVerification } from '@/services/shared/privacy.service';
 import { cleanupAllUserTempFiles } from '@/services/shared/cleanup.service';
 import MRZValidationDisplay from '@/components/identity/MRZValidationDisplay';
 import { useDataReconciliation } from '@/hooks/identity/useDataReconciliation';
@@ -32,9 +30,7 @@ export default function VerifyIdentityScreen() {
     lastName: 'Mich',
     birthDate: '14/12/2002'
   };
-
   const {
-    isProcessing,
     showReconciliationModal,
     reconciliation,
     idData,

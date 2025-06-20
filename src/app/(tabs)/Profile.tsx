@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useUserProfile } from '@/hooks/users/useUserProfile';
-import { formatMissingValue, formatFullName } from '@/utils/format';
+import { formatMissingValue } from '@/utils/format';
 
 export default function ProfileScreen() {
   const { userData, user, loading, handleLogout, handleVerifyIdentity } = useUserProfile();
@@ -74,7 +74,7 @@ export default function ProfileScreen() {
                 📅 {new Date(userData.profile.verification_date.seconds * 1000).toLocaleDateString('fr-FR')}
               </Text>
             )}
-          </View>        )}
+          </View>)}
 
         <View style={styles.infoContainer}>
           <Text style={styles.label}>Rôle</Text>

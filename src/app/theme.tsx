@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { StyleSheet } from 'react-native';
 
 type ColorScheme = 'light' | 'dark';
 

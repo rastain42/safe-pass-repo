@@ -1,20 +1,18 @@
-import * as SecureStore from "expo-secure-store";
-import { initializeApp, getApps } from "firebase/app";
-import { initializeAuth, getAuth, Auth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getFunctions } from "firebase/functions";
-import { getStorage } from "firebase/storage";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Platform } from "react-native";
+import * as SecureStore from 'expo-secure-store';
+import { initializeApp, getApps } from 'firebase/app';
+import { initializeAuth, getAuth, Auth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getFunctions } from 'firebase/functions';
+import { getStorage } from 'firebase/storage';
 
 // Configuration Firebase
 export const firebaseConfig = {
-  apiKey: "AIzaSyDL6ewrUgqR1JAOUNnQ675J29Jny1qsan4",
-  authDomain: "safepass.fr",
-  projectId: "safe-pass-5ebef",
-  storageBucket: "safe-pass-5ebef.firebasestorage.app",
-  messagingSenderId: "977260058877",
-  appId: "1:977260058877:android:9d1443dcf8f709ff4e0694",
+  apiKey: 'AIzaSyDL6ewrUgqR1JAOUNnQ675J29Jny1qsan4',
+  authDomain: 'safepass.fr',
+  projectId: 'safe-pass-5ebef',
+  storageBucket: 'safe-pass-5ebef.firebasestorage.app',
+  messagingSenderId: '977260058877',
+  appId: '1:977260058877:android:9d1443dcf8f709ff4e0694',
 };
 
 // Initialiser l'application
@@ -33,7 +31,7 @@ try {
   auth = initializeAuth(app);
 } catch (error) {
   // Si l'auth est déjà initialisée, utiliser l'instance existante
-  console.warn("Firebase Auth already initialized:", error);
+  console.warn('Firebase Auth already initialized:', error);
   auth = getAuth(app);
 }
 
@@ -43,7 +41,7 @@ const functions = getFunctions(app);
 const storage = getStorage(app);
 
 // Définir la langue par défaut pour l'authentification
-auth.languageCode = "fr";
+auth.languageCode = 'fr';
 
 // S'assurer qu'on utilise les fonctions en production (pas l'émulateur)
 // Si vous voulez utiliser l'émulateur, commentez cette ligne
@@ -55,7 +53,7 @@ export const saveAuthData = async (key: string, data: any) => {
     await SecureStore.setItemAsync(key, JSON.stringify(data));
     return true;
   } catch (error) {
-    console.error("Erreur lors de la sauvegarde des données:", error);
+    console.error('Erreur lors de la sauvegarde des données:', error);
     return false;
   }
 };
@@ -65,7 +63,7 @@ export const getAuthData = async (key: string) => {
     const data = await SecureStore.getItemAsync(key);
     return data ? JSON.parse(data) : null;
   } catch (error) {
-    console.error("Erreur lors de la récupération des données:", error);
+    console.error('Erreur lors de la récupération des données:', error);
     return null;
   }
 };
@@ -75,7 +73,7 @@ export const removeAuthData = async (key: string) => {
     await SecureStore.deleteItemAsync(key);
     return true;
   } catch (error) {
-    console.error("Erreur lors de la suppression des données:", error);
+    console.error('Erreur lors de la suppression des données:', error);
     return false;
   }
 };

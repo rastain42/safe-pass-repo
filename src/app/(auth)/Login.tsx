@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { Link } from 'expo-router';
 import { SafeFirebaseRecaptcha } from '@/components/auth/SafeFirebaseRecaptcha';
 import { firebaseConfig } from '@/config/firebase';
 import { useAuth } from '@/hooks/auth/useAuth';

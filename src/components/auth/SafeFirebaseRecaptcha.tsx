@@ -1,6 +1,5 @@
 import React, { forwardRef, useEffect } from 'react';
 import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
-import type { FirebaseApp } from 'firebase/app';
 
 interface SafeFirebaseRecaptchaProps {
     firebaseConfig: any;
@@ -16,7 +15,7 @@ const suppressDefaultPropsWarning = () => {
     console.warn = (...args) => {
         const message = args[0];
         if (
-            typeof message === 'string' && 
+            typeof message === 'string' &&
             message.includes('FirebaseRecaptcha') &&
             message.includes('defaultProps')
         ) {

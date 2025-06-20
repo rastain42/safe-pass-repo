@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Alert } from 'react-native';
-import { User, IdentityData, DataReconciliation, AnalysisResult } from '@/types/user';
+import { IdentityData, DataReconciliation, AnalysisResult } from '@/types/user';
 import {
   processIdentityVerification,
   applyUserReconciliationChoice,

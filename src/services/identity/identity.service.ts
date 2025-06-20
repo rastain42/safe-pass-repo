@@ -4,7 +4,6 @@ import {
   DataReconciliation,
   AnalysisResult,
   VerificationDocuments,
-  UserVerificationStatus,
 } from '@/types/user';
 import {
   analyzeDataConflicts,
@@ -121,12 +120,9 @@ export const resetVerificationProcess = async (userId: string): Promise<boolean>
   try {
     const userRef = doc(db, 'users', userId);
     const userSnap = await getDoc(userRef);
-
     if (!userSnap.exists()) {
       throw new Error('Utilisateur non trouvé');
     }
-
-    const user = userSnap.data();
 
     // Remise à zéro du statut de vérification
     await updateDoc(userRef, {

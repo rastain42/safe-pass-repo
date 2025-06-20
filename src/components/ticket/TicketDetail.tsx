@@ -16,10 +16,7 @@ interface TicketDetailProps {
 const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, onClose }) => {
     const [eventName, setEventName] = useState<string>('Chargement...');
     const [eventImage, setEventImage] = useState<string | null>(null);
-    const [eventStartDate, setStartEventDate] = useState<Date | null>(null);
-    const [eventEndDate, setEndEventDate] = useState<Date | null>(null);
-
-    const [loading, setLoading] = useState<boolean>(true);
+    const [eventStartDate, setStartEventDate] = useState<Date | null>(null); const [eventEndDate, setEndEventDate] = useState<Date | null>(null);
 
     useEffect(() => {
         const fetchEventDetails = async () => {
@@ -83,8 +80,6 @@ const TicketDetail: React.FC<TicketDetailProps> = ({ ticket, onClose }) => {
                 }
             } catch (error) {
                 console.error('Erreur lors de la récupération des détails de l\'événement:', error);
-            } finally {
-                setLoading(false);
             }
         };
 

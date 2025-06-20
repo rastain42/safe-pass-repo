@@ -6,8 +6,8 @@
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
-import { auth, db, functions, storage } from '../../config/firebase';
-import { validateMRZ, compareMRZWithOCR, type MRZValidationResult } from './mrz.service';
+import { auth, db, functions } from '../../config/firebase';
+import { type MRZValidationResult } from './mrz.service';
 import { compareFaces, type BiometricComparisonResult } from '../auth/biometric.service';
 
 export type ProgressCallback = (progress: number) => void;

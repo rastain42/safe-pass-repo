@@ -1,4 +1,4 @@
-import { Link, Stack, router } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 
 import { Text, View } from '@/components/basic/Themed';

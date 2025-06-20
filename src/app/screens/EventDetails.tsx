@@ -36,12 +36,10 @@ export default function EventDetailsScreen() {
         processingPayment,
         totalAmount,
         ticketsData,
-        scrollViewRef,
-        updateTicketQuantity,
+        scrollViewRef, updateTicketQuantity,
         handlePurchase,
         handlePaymentSuccess,
-        handlePaymentCancel,
-        setProcessingPayment
+        handlePaymentCancel
     } = useTicketPurchase(event);
 
     // Pour le mode démo/debug (à supprimer en production)

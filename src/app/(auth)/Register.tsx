@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Animated } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { SafeFirebaseRecaptcha } from '@/components/auth/SafeFirebaseRecaptcha';
